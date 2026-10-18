@@ -2,6 +2,10 @@
 
 一个完全离线的本地多视频播放器。当前版本为 **0.2 开发版**：从本地文件/文件夹导入，建立 SQLite 视频库，再创建最多 16 个画面的播放墙。
 
+**下载安装：[Windows x64 安装包（v0.2.0）](https://github.com/lengziyu/vexa-player/releases/download/v0.2.0/Vexa-Player-0.2.0-Windows-x64.exe)** · [发布页与校验文件](https://github.com/lengziyu/vexa-player/releases/tag/v0.2.0)
+
+下载 `.exe` 后运行安装即可。当前提供 Windows 64 位开发版；macOS 安装包尚未发布。
+
 ## 已接通的功能
 
 - 深色、浅色、跟随系统，三种强调色；选择保存在本机，重启生效。
