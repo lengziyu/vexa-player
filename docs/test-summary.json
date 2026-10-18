@@ -1,18 +1,18 @@
 {
   "date": "2026-10-19",
-  "version": "0.2.1",
-  "testedExecutable": "release/0.2.1/win-unpacked/Vexa Player.exe",
+  "version": "0.2.2",
+  "testedExecutable": "release/0.2.2/win-unpacked/Vexa Player.exe",
   "unitTests": {
-    "passed": 47,
-    "files": 9
+    "passed": 54,
+    "files": 10
   },
   "audit": {
     "reportedVulnerabilities": 0
   },
   "installer": {
-    "path": "release/0.2.1/Vexa-Player-0.2.1-Windows-x64.exe",
-    "bytes": 133171684,
-    "sha256": "4358b2ea6487a33550bd7b42a985d861bc17dfb9adfe46c4d98d483a1ddc288b"
+    "bytes": 133191769,
+    "path": "release/0.2.2/Vexa-Player-0.2.2-Windows-x64.exe",
+    "sha256": "d64038d543daf2326d04a8c241b56146a2f14a43d33b789c93b7b7a860ac060f"
   },
   "packaging": {
     "success": true,
@@ -34,15 +34,15 @@
       "locales": 55
     },
     "current": {
-      "version": "0.2.1",
-      "installerBytes": 133171684,
-      "installerSha256": "4358b2ea6487a33550bd7b42a985d861bc17dfb9adfe46c4d98d483a1ddc288b",
-      "installedBytes": 502413369,
-      "asarBytes": 1568863,
+      "version": "0.2.2",
+      "installerBytes": 133191769,
+      "installerSha256": "d64038d543daf2326d04a8c241b56146a2f14a43d33b789c93b7b7a860ac060f",
+      "installedBytes": 502433660,
+      "asarBytes": 1589154,
       "locales": 2
     },
-    "savedInstallerBytes": 34284251,
-    "savedInstallerPercent": 20.47359563577128,
+    "savedInstallerBytes": 34264166,
+    "savedInstallerPercent": 20.461601435625443,
     "media": [
       {
         "path": "ffmpeg-static/ffmpeg.exe",
@@ -199,6 +199,70 @@
         "passed": true
       },
       {
+        "name": "fullscreen timeline has a larger hover track and drag target",
+        "passed": true
+      },
+      {
+        "name": "fullscreen inactivity hides toolbar, video overlays and cursor",
+        "passed": true
+      },
+      {
+        "name": "mouse movement immediately restores fullscreen controls",
+        "passed": true
+      },
+      {
+        "name": "thick timeline remains draggable without rearranging the tile",
+        "passed": true
+      },
+      {
+        "name": "unified controls open as a compact dropdown below the fullscreen button",
+        "passed": true,
+        "detail": {
+          "below": true,
+          "width": 334,
+          "height": 276.296875,
+          "bottom": 1417,
+          "viewport": 1440,
+          "inside": true
+        }
+      },
+      {
+        "name": "fullscreen dropdown keeps the video area unchanged",
+        "passed": true
+      },
+      {
+        "name": "open dropdown stays visible during inactivity",
+        "passed": true
+      },
+      {
+        "name": "unified progress seeks every video",
+        "passed": true
+      },
+      {
+        "name": "unified volume preserves focus-only audio routing",
+        "passed": true
+      },
+      {
+        "name": "unified speed reaches every real player",
+        "passed": true
+      },
+      {
+        "name": "unified seeking and speed changes keep paused players paused",
+        "passed": true
+      },
+      {
+        "name": "keyboard navigation restores controls and keeps focused actions visible",
+        "passed": true
+      },
+      {
+        "name": "windowed dropdown stays compact and dismisses on outside click",
+        "passed": true
+      },
+      {
+        "name": "Escape dismisses the dropdown and restores button focus",
+        "passed": true
+      },
+      {
         "name": "drag exchange preserves the original video element",
         "passed": true
       },
@@ -311,7 +375,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.977654,
+            "currentTime": 3.972763,
             "paused": false,
             "error": null,
             "frames": 119,
@@ -320,7 +384,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.977683,
+            "currentTime": 3.972784,
             "paused": false,
             "error": null,
             "frames": 119,
@@ -329,7 +393,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.977659,
+            "currentTime": 3.972769,
             "paused": false,
             "error": null,
             "frames": 119,
@@ -338,7 +402,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.977647,
+            "currentTime": 3.970794,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -354,7 +418,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.975187,
+            "currentTime": 3.978477,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -363,7 +427,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.975216,
+            "currentTime": 3.978524,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -372,7 +436,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.975194,
+            "currentTime": 3.978463,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -381,7 +445,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.975187,
+            "currentTime": 3.978388,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -390,7 +454,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.975174,
+            "currentTime": 3.978347,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -399,7 +463,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.975163,
+            "currentTime": 3.978325,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -408,7 +472,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.975157,
+            "currentTime": 3.978192,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -417,7 +481,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.975148,
+            "currentTime": 3.978149,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -426,7 +490,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.975141,
+            "currentTime": 3.978124,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -442,7 +506,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.989078,
+            "currentTime": 3.991333,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -451,7 +515,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.991123,
+            "currentTime": 3.991386,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -460,7 +524,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.989114,
+            "currentTime": 3.99137,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -469,7 +533,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.989108,
+            "currentTime": 3.991365,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -478,7 +542,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.989102,
+            "currentTime": 3.991347,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -487,7 +551,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.989087,
+            "currentTime": 3.991342,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -496,7 +560,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.98908,
+            "currentTime": 3.991337,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -505,7 +569,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.989075,
+            "currentTime": 3.991329,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -514,7 +578,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.989065,
+            "currentTime": 3.991221,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -523,7 +587,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.989059,
+            "currentTime": 3.991215,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -532,7 +596,7 @@
           {
             "width": 1920,
             "height": 1080,
-            "currentTime": 3.989054,
+            "currentTime": 3.991182,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -541,7 +605,7 @@
           {
             "width": 1920,
             "height": 1080,
-            "currentTime": 3.989043,
+            "currentTime": 3.991176,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -550,7 +614,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.989036,
+            "currentTime": 3.991157,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -559,7 +623,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.989031,
+            "currentTime": 3.991151,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -568,7 +632,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.98902,
+            "currentTime": 3.991132,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -577,7 +641,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.989015,
+            "currentTime": 3.991083,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -624,7 +688,7 @@
         "electron": "44.9.0",
         "chrome": "152.0.7977.167"
       },
-      "version": "0.2.1"
+      "version": "0.2.2"
     },
     "success": true
   },
@@ -638,7 +702,7 @@
         "playing": true,
         "width": 320,
         "height": 180,
-        "currentTime": 1.658308,
+        "currentTime": 1.665175,
         "error": null,
         "visibleError": null
       },
@@ -647,7 +711,7 @@
         "playing": true,
         "width": 320,
         "height": 180,
-        "currentTime": 1.654331,
+        "currentTime": 1.657147,
         "error": null,
         "visibleError": null
       },
@@ -656,7 +720,7 @@
         "playing": true,
         "width": 320,
         "height": 180,
-        "currentTime": 1.647906,
+        "currentTime": 1.660407,
         "error": null,
         "visibleError": null
       },
@@ -665,7 +729,7 @@
         "playing": true,
         "width": 320,
         "height": 180,
-        "currentTime": 1.600293,
+        "currentTime": 1.60317,
         "error": null,
         "visibleError": null
       },
@@ -683,7 +747,7 @@
         "playing": true,
         "width": 320,
         "height": 180,
-        "currentTime": 1.663173,
+        "currentTime": 1.670884,
         "error": null,
         "visibleError": null
       }

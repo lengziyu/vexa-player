@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onBeforeUnmount, onMounted, ref, watch } from "vue";
 import type { TileState } from "../shared/contracts";
+import { PLAYBACK_SPEEDS } from "../shared/contracts";
 import { HtmlVideoEngine } from "../player/engine";
 import { useWall } from "../stores/wall";
 import { useSettings } from "../stores/settings";
@@ -19,13 +20,19 @@ const emit = defineEmits<{
 const wall = useWall(),
   settings = useSettings(),
   video = ref<HTMLVideoElement>(),
-  loaded = ref(false);
+  loaded = ref(false),
+  interacting = ref(false),
+  seekDraft = ref<number | null>(null);
 let engine: HtmlVideoEngine | undefined;
 let monitorTimer: ReturnType<typeof setInterval> | undefined;
 const monitor = new PlaybackQualityMonitor();
 const source = computed(() => `vexa-media://media/${props.tile.media.id}`);
-const ratio = computed(() =>
-  props.tile.duration ? (props.tile.progress / props.tile.duration) * 100 : 0,
+const ratio = computed(
+  () =>
+    seekDraft.value ??
+    (props.tile.duration
+      ? (props.tile.progress / props.tile.duration) * 100
+      : 0),
 );
 const time = (value: number) =>
   Number.isFinite(value)
@@ -56,7 +63,12 @@ function failed(): void {
 }
 function seek(event: Event): void {
   const value = Number((event.target as HTMLInputElement).value);
+  seekDraft.value = value;
   wall.seek(props.tile.id, (value * props.tile.duration) / 100);
+}
+function release(): void {
+  interacting.value = false;
+  seekDraft.value = null;
 }
 function replay(): void {
   wall.retry(props.tile.id);
@@ -68,6 +80,8 @@ function onPlayback(): void {
   if (!wall.privacy && !props.tile.paused) props.tile.status = "playing";
 }
 onMounted(() => {
+  window.addEventListener("pointerup", release);
+  window.addEventListener("pointercancel", release);
   if (video.value) {
     engine = new HtmlVideoEngine(video.value);
     wall.register(props.tile.id, engine);
@@ -93,6 +107,7 @@ watch(
   () => props.tile.media.id,
   () => {
     loaded.value = false;
+    release();
     monitor.reset();
     video.value?.load();
   },
@@ -114,6 +129,8 @@ watch(
   () => wall.sync(),
 );
 onBeforeUnmount(() => {
+  window.removeEventListener("pointerup", release);
+  window.removeEventListener("pointercancel", release);
   clearInterval(monitorTimer);
   if (engine) wall.unregister(props.tile.id, engine);
 });
@@ -128,13 +145,16 @@ onBeforeUnmount(() => {
     }"
     tabindex="0"
     :aria-label="tile.media.name"
-    draggable="true"
+    :draggable="!interacting"
     @click="wall.focus(tile.id)"
     @dblclick.self="wall.zoomed = wall.zoomed === tile.id ? null : tile.id"
     @mouseenter="wall.hovered = tile.id"
     @mouseleave="wall.hovered = null"
     @dragstart="
-      (event) => event.dataTransfer?.setData('application/vexa-tile', tile.id)
+      (event) => {
+        if (interacting) event.preventDefault();
+        else event.dataTransfer?.setData('application/vexa-tile', tile.id);
+      }
     "
     @dragover.prevent
     @drop.prevent="
@@ -242,7 +262,7 @@ onBeforeUnmount(() => {
     >
       <Icon :name="tile.paused ? 'play' : 'pause'" :size="20" />
     </button>
-    <div class="tile-bottom">
+    <div class="tile-bottom" @pointerdown="interacting = true" @dblclick.stop>
       <div class="tile-title-row">
         <div class="tile-title">
           <strong>{{ tile.media.name }}</strong
@@ -269,6 +289,7 @@ onBeforeUnmount(() => {
         :style="{ '--progress': `${ratio}%` }"
         @click.stop
         @input="seek"
+        @change="seekDraft = null"
       />
       <div class="tile-extra">
         <button
@@ -289,11 +310,7 @@ onBeforeUnmount(() => {
           aria-label="此画面倍速"
           @click.stop
         >
-          <option
-            v-for="speed in [0.5, 0.75, 1, 1.25, 1.5, 2]"
-            :key="speed"
-            :value="speed"
-          >
+          <option v-for="speed in PLAYBACK_SPEEDS" :key="speed" :value="speed">
             {{ speed }}×
           </option></select
         ><button

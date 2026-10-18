@@ -13,6 +13,8 @@ import SettingsPanel from "./components/SettingsPanel.vue";
 import LibraryFilters from "./components/LibraryFilters.vue";
 import VirtualMediaGrid from "./components/VirtualMediaGrid.vue";
 import MediaCard from "./components/MediaCard.vue";
+import WallControls from "./components/WallControls.vue";
+import { useIdleControls } from "./composables/useIdleControls";
 import { useSettings } from "./stores/settings";
 import { useLibrary } from "./stores/library";
 import { useWall } from "./stores/wall";
@@ -37,7 +39,12 @@ const toastMessage = ref(""),
   recursive = ref(true),
   countMenu = ref(false),
   scope = ref<"current" | "all">("current"),
-  fullscreen = ref(false);
+  fullscreen = ref(false),
+  wallControlsOpen = ref(false),
+  wallControlsHeight = ref(264),
+  pointerHeld = ref(false),
+  keyboardNavigation = ref(false),
+  controlsFocused = ref(false);
 const dimensions = ref({ width: 1000, height: 500 }),
   selectedIndex = ref<number | null>(null);
 let resizeObserver: ResizeObserver,
@@ -81,6 +88,33 @@ const mountedTiles = computed(() =>
 const isLibrary = computed(
   () => view.value === "library" || view.value === "favorites",
 );
+const { idle: controlsIdle, wake: wakeControls } = useIdleControls(
+  () => fullscreen.value && !isLibrary.value && wall.playing && !wall.privacy,
+  () =>
+    wallControlsOpen.value ||
+    countMenu.value ||
+    !!modal.value ||
+    pointerHeld.value ||
+    (keyboardNavigation.value && controlsFocused.value),
+);
+function pointerActivity(): void {
+  keyboardNavigation.value = false;
+  wakeControls();
+}
+function pointerStart(): void {
+  pointerHeld.value = true;
+  pointerActivity();
+}
+function pointerEnd(): void {
+  pointerHeld.value = false;
+  wakeControls();
+}
+function controlFocus(event: FocusEvent): void {
+  controlsFocused.value = !!(event.target as HTMLElement).closest(
+    "button,input,select",
+  );
+  wakeControls();
+}
 const strugglingCount = computed(
   () =>
     wall.tiles.filter((t) => !t.paused && wall.quality[t.id]?.struggling)
@@ -352,6 +386,18 @@ async function removeFolder(id: string): Promise<void> {
   }
 }
 function keyboard(event: KeyboardEvent): void {
+  keyboardNavigation.value = true;
+  if (fullscreen.value && controlsIdle.value && event.key === "Tab") {
+    event.preventDefault();
+    wakeControls();
+    void nextTick(() =>
+      panelElement.value
+        ?.querySelector<HTMLElement>(".wall-toolbar button:not(:disabled)")
+        ?.focus(),
+    );
+    return;
+  }
+  wakeControls();
   if (
     (event.ctrlKey || event.metaKey) &&
     event.shiftKey &&
@@ -381,6 +427,7 @@ function keyboard(event: KeyboardEvent): void {
   }
   if (event.key === "Escape") {
     if (modal.value) closeModal();
+    else if (wallControlsOpen.value) wallControlsOpen.value = false;
     else if (countMenu.value) countMenu.value = false;
     else if (wall.zoomed) wall.zoomed = null;
     return;
@@ -450,8 +497,20 @@ watch(
 );
 watch(
   () => wall.tiles.length,
-  () => nextTick(measure),
+  () => {
+    if (!wall.tiles.length) wallControlsOpen.value = false;
+    return nextTick(measure);
+  },
 );
+watch(wallControlsOpen, (open) => {
+  if (open) countMenu.value = false;
+});
+watch(countMenu, (open) => {
+  if (open) wallControlsOpen.value = false;
+});
+watch([view, modal], () => {
+  if (isLibrary.value || modal.value) wallControlsOpen.value = false;
+});
 onMounted(async () => {
   try {
     await settings.init();
@@ -472,6 +531,9 @@ onMounted(async () => {
   }
   document.addEventListener("keydown", keyboard);
   document.addEventListener("fullscreenchange", fullscreenChanged);
+  window.addEventListener("pointerup", pointerEnd);
+  window.addEventListener("pointercancel", pointerEnd);
+  window.addEventListener("blur", pointerEnd);
 });
 onBeforeUnmount(() => {
   resizeObserver?.disconnect();
@@ -479,6 +541,9 @@ onBeforeUnmount(() => {
   unsubscribePrivacy();
   document.removeEventListener("keydown", keyboard);
   document.removeEventListener("fullscreenchange", fullscreenChanged);
+  window.removeEventListener("pointerup", pointerEnd);
+  window.removeEventListener("pointercancel", pointerEnd);
+  window.removeEventListener("blur", pointerEnd);
   clearTimeout(searchTimer);
   clearTimeout(toastTimer);
 });
@@ -697,7 +762,20 @@ onBeforeUnmount(() => {
           <section
             ref="panelElement"
             class="wall-panel"
-            :class="{ 'is-fullscreen': fullscreen }"
+            :class="{
+              'is-fullscreen': fullscreen,
+              'controls-idle': controlsIdle,
+              'has-wall-controls': wallControlsOpen,
+            }"
+            :style="{ '--wall-controls-height': `${wallControlsHeight}px` }"
+            @pointermove="pointerActivity"
+            @pointerenter="pointerActivity"
+            @pointerdown.capture="pointerStart"
+            @focusin="controlFocus"
+            @focusout="
+              controlsFocused = false;
+              wakeControls();
+            "
           >
             <div class="wall-toolbar">
               <div class="layout-switch" role="group" aria-label="布局模式">
@@ -868,11 +946,21 @@ onBeforeUnmount(() => {
                 wall.tiles.length
                   ? `${wall.tiles.length} 个画面，${wall.playing ? "正在放映" : "已暂停"}`
                   : "准备好，遇见下一幕"
-              }}</span
-              ><span class="wall-hint-right"
-                >悬停画面，按
-                <kbd>R</kbd> 邂逅下一幕<span>·</span>双击放大</span
-              >
+              }}</span>
+              <div class="wall-hint-actions">
+                <span class="wall-hint-right"
+                  >悬停画面，按
+                  <kbd>R</kbd> 邂逅下一幕<span>·</span>双击放大</span
+                ><WallControls
+                  v-model:open="wallControlsOpen"
+                  :fullscreen="fullscreen"
+                  @height="
+                    (height) => {
+                      if (height) wallControlsHeight = height;
+                    }
+                  "
+                />
+              </div>
             </div>
           </section>
           <section class="global-player" aria-label="全局播放控制">
@@ -963,9 +1051,13 @@ onBeforeUnmount(() => {
                 min="0"
                 max="1"
                 step=".01"
-                v-model.number="wall.volume"
+                :value="wall.volume"
                 aria-label="全局音量"
-                @input="wall.sync()"
+                @input="
+                  wall.setVolume(
+                    Number(($event.target as HTMLInputElement).value),
+                  )
+                "
               /><button
                 class="icon-button"
                 title="偏好设置"

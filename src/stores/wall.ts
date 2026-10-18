@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { computed, ref, watch } from "vue";
 import type { MediaItem, TileState } from "../shared/contracts";
+import { PLAYBACK_SPEEDS } from "../shared/contracts";
 import type { PlayerEngine } from "../player/engine";
 import { chooseRandom, randomStart } from "../core/random";
 import { useSettings } from "./settings";
@@ -12,6 +13,7 @@ export const useWall = defineStore("wall", () => {
     zoomed = ref<string | null>(null),
     muted = ref(true),
     volume = ref(0.65),
+    unifiedSpeed = ref(1),
     mixedAudio = ref(false),
     privacy = ref(false),
     hovered = ref<string | null>(null),
@@ -47,7 +49,7 @@ export const useWall = defineStore("wall", () => {
       paused,
       muted: false,
       volume: 1,
-      speed: 1,
+      speed: unifiedSpeed.value,
       locked: false,
       loop: false,
       progress: 0,
@@ -289,16 +291,34 @@ export const useWall = defineStore("wall", () => {
   }
   function seek(id: string, seconds: number): void {
     const tile = tiles.value.find((t) => t.id === id);
-    if (tile && Number.isFinite(seconds))
+    if (tile && Number.isFinite(seconds)) {
       tile.progress = Math.max(0, Math.min(tile.duration, seconds));
+      if (tile.status === "ended" && tile.progress < tile.duration)
+        tile.status = "paused";
+    }
     engines.get(id)?.seek(seconds);
   }
   function seekAll(delta: number): void {
     for (const t of tiles.value) seek(t.id, t.progress + delta);
   }
   function seekPercent(percent: number): void {
+    if (!Number.isFinite(percent)) return;
+    const ratio = Math.max(0, Math.min(100, percent)) / 100;
     for (const t of tiles.value)
-      if (t.duration) seek(t.id, (t.duration * percent) / 100);
+      if (Number.isFinite(t.duration) && t.duration > 0 && t.status !== "error")
+        seek(t.id, t.duration * ratio);
+  }
+  function setVolume(value: number): void {
+    if (!Number.isFinite(value)) return;
+    volume.value = Math.max(0, Math.min(1, value));
+    muted.value = volume.value === 0;
+    sync();
+  }
+  function setSpeed(value: number): void {
+    if (!(PLAYBACK_SPEEDS as readonly number[]).includes(value)) return;
+    unifiedSpeed.value = value;
+    for (const tile of tiles.value) tile.speed = value;
+    sync();
   }
   function focus(id: string): void {
     focused.value = id;
@@ -380,6 +400,7 @@ export const useWall = defineStore("wall", () => {
     zoomed,
     muted,
     volume,
+    unifiedSpeed,
     mixedAudio,
     privacy,
     hovered,
@@ -404,6 +425,8 @@ export const useWall = defineStore("wall", () => {
     seek,
     seekAll,
     seekPercent,
+    setVolume,
+    setSpeed,
     focus,
     main,
     swap,

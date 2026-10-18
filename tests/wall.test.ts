@@ -49,6 +49,83 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 describe("playback resource controls", () => {
+  it("applies percentage seeking to different durations while preserving pause and lock state", () => {
+    const w = useWall();
+    w.newWall([media("a"), { ...media("b"), duration: 120 }]);
+    const first = engine(),
+      second = engine();
+    w.register(w.tiles[0]!.id, first);
+    w.register(w.tiles[1]!.id, second);
+    w.tiles[0]!.locked = true;
+    w.toggle(w.tiles[1]!.id);
+    w.seekPercent(25);
+    expect(first.seek).toHaveBeenLastCalledWith(15);
+    expect(second.seek).toHaveBeenLastCalledWith(30);
+    expect(w.tiles.map((t) => t.paused)).toEqual([false, true]);
+    expect(w.tiles[0]!.locked).toBe(true);
+    w.seekPercent(NaN);
+    expect(w.tiles.map((t) => t.progress)).toEqual([15, 30]);
+    w.seekPercent(150);
+    expect(w.tiles.map((t) => t.progress)).toEqual([60, 120]);
+  });
+  it("seeks back from ended state without losing the selected replay position", () => {
+    const w = useWall();
+    w.newWall([media("a")]);
+    const tile = w.tiles[0]!,
+      e = engine();
+    w.register(tile.id, e);
+    w.ended(tile.id);
+    w.seekPercent(50);
+    expect(tile.status).toBe("paused");
+    expect(tile.paused).toBe(true);
+    w.toggle(tile.id);
+    expect(e.seek).toHaveBeenLastCalledWith(30);
+    expect(tile.paused).toBe(false);
+  });
+  it("applies unified speed to current and new tiles without resuming paused streams", () => {
+    const w = useWall();
+    w.newWall([media("a"), media("b")]);
+    const e = engine();
+    w.register(w.tiles[0]!.id, e);
+    w.toggleAll(false);
+    w.setSpeed(1.5);
+    w.add(media("c"));
+    expect(w.tiles.every((t) => t.speed === 1.5 && t.paused)).toBe(true);
+    expect(e.configure).toHaveBeenLastCalledWith(
+      expect.objectContaining({ speed: 1.5 }),
+    );
+    w.tiles[0]!.speed = 2;
+    w.replace(w.tiles[0]!.id, media("d"));
+    expect(w.tiles[0]!.speed).toBe(2);
+    w.setSpeed(Infinity);
+    expect(w.tiles[0]!.speed).toBe(2);
+    w.newWall([media("a")]);
+    expect(w.tiles[0]!.speed).toBe(1.5);
+  });
+  it("adjusts master volume while retaining individual levels, focus routing and privacy", () => {
+    const w = useWall();
+    w.newWall([media("a"), media("b")]);
+    const first = engine(),
+      second = engine();
+    w.register(w.tiles[0]!.id, first);
+    w.register(w.tiles[1]!.id, second);
+    w.tiles[0]!.volume = 0.5;
+    w.setVolume(0.4);
+    expect(first.configure).toHaveBeenLastCalledWith(
+      expect.objectContaining({ volume: 0.2, muted: false }),
+    );
+    expect(second.configure).toHaveBeenLastCalledWith(
+      expect.objectContaining({ volume: 0.4, muted: true }),
+    );
+    w.setVolume(0);
+    expect(w.muted).toBe(true);
+    w.hide();
+    w.setVolume(0.7);
+    expect(first.configure).toHaveBeenLastCalledWith(
+      expect.objectContaining({ muted: true }),
+    );
+    expect(w.tiles.every((t) => t.paused)).toBe(true);
+  });
   it("does not downgrade an already playing stream when play-all is requested", () => {
     const w = useWall();
     w.newWall([media("a")]);

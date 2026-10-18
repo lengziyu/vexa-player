@@ -88,6 +88,263 @@ async function take(name) {
     animations: "disabled",
   });
 }
+async function exercisePlaybackControls() {
+  const wall = page.locator(".wall-panel"),
+    tile = page.locator(".video-tile").first(),
+    progress = tile.locator(".tile-progress");
+  const resetProgress = () =>
+    page.locator('[aria-label="全局百分比跳转"]').evaluate((el) => {
+      el.value = "0";
+      el.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  async function dragRange(input, ratio, hold = 0) {
+    const box = await input.boundingBox();
+    assert.ok(box, "Range input is not visible");
+    await page.mouse.move(box.x + 9, box.y + box.height / 2);
+    await page.mouse.down();
+    if (hold) await page.waitForTimeout(hold);
+    await page.mouse.move(
+      box.x + 9 + (box.width - 18) * ratio,
+      box.y + box.height / 2,
+      { steps: 12 },
+    );
+    await page.mouse.up();
+  }
+  await resetProgress();
+  await tile.locator(".tile-shade").hover({ position: { x: 25, y: 50 } });
+  check(
+    "fullscreen timeline has a larger hover track and drag target",
+    await progress.evaluate(
+      (el) =>
+        el.getBoundingClientRect().height >= 32 &&
+        parseFloat(getComputedStyle(el).getPropertyValue("--track-size")) >= 9,
+    ),
+  );
+  await until(
+    async () =>
+      await wall.evaluate((el) => el.classList.contains("controls-idle")),
+    6000,
+  );
+  await until(
+    async () =>
+      await wall.evaluate(
+        (el) =>
+          getComputedStyle(el.querySelector(".wall-toolbar")).visibility ===
+            "hidden" &&
+          getComputedStyle(el.querySelector(".tile-bottom")).visibility ===
+            "hidden",
+      ),
+  );
+  check(
+    "fullscreen inactivity hides toolbar, video overlays and cursor",
+    await wall.evaluate(
+      (el) =>
+        getComputedStyle(el.querySelector(".wall-toolbar")).visibility ===
+          "hidden" &&
+        getComputedStyle(el.querySelector(".tile-bottom")).visibility ===
+          "hidden" &&
+        getComputedStyle(el).cursor === "none",
+    ),
+  );
+  await page.screenshot({
+    path: join(screenshots, "fullscreen-idle.png"),
+    animations: "disabled",
+  });
+  await page.mouse.move(240, 170);
+  await until(
+    async () =>
+      !(await wall.evaluate((el) => el.classList.contains("controls-idle"))),
+  );
+  check("mouse movement immediately restores fullscreen controls", true);
+  await dragRange(progress, 0.3, 3100);
+  await until(
+    async () =>
+      await tile
+        .locator("video")
+        .evaluate((v) => v.currentTime > 5 && v.currentTime < 11),
+  );
+  check(
+    "thick timeline remains draggable without rearranging the tile",
+    !(await wall.evaluate((el) => el.classList.contains("controls-idle"))),
+  );
+  const fullscreenVideoHeight = await page
+    .locator(".video-wall")
+    .evaluate((el) => el.getBoundingClientRect().height);
+  await page.getByRole("button", { name: "统一播放设置", exact: true }).click();
+  const popup = page.getByRole("region", { name: "统一播放控制", exact: true });
+  await popup.waitFor();
+  await page.waitForTimeout(700);
+  const position = await popup.evaluate((el) => {
+    const r = el.getBoundingClientRect(),
+      b = document
+        .querySelector(".wall-controls-trigger")
+        .getBoundingClientRect();
+    return {
+      below: r.top >= b.bottom,
+      width: r.width,
+      height: r.height,
+      bottom: r.bottom,
+      viewport: innerHeight,
+      inside: document.fullscreenElement.contains(el),
+    };
+  });
+  check(
+    "unified controls open as a compact dropdown below the fullscreen button",
+    position.below &&
+      position.width <= 360 &&
+      position.height < 320 &&
+      position.bottom <= position.viewport &&
+      position.inside &&
+      (await page.locator(".modal-backdrop").count()) === 0,
+    position,
+  );
+  check(
+    "fullscreen dropdown keeps the video area unchanged",
+    Math.abs(
+      (await page
+        .locator(".video-wall")
+        .evaluate((el) => el.getBoundingClientRect().height)) -
+        fullscreenVideoHeight,
+    ) < 1,
+  );
+  await page.screenshot({
+    path: join(screenshots, "fullscreen-controls.png"),
+    animations: "disabled",
+  });
+  await page.waitForTimeout(3100);
+  check(
+    "open dropdown stays visible during inactivity",
+    !(await wall.evaluate((el) => el.classList.contains("controls-idle"))) &&
+      (await popup.isVisible()),
+  );
+  await dragRange(
+    popup.getByRole("slider", { name: "统一进度", exact: true }),
+    0.4,
+  );
+  await until(
+    async () =>
+      await page
+        .locator(".video-tile video")
+        .evaluateAll((v) =>
+          v.every((x) => x.currentTime > 8 && x.currentTime < 12),
+        ),
+  );
+  check("unified progress seeks every video", true);
+  await dragRange(
+    popup.getByRole("slider", { name: "统一音量", exact: true }),
+    0.3,
+  );
+  check(
+    "unified volume preserves focus-only audio routing",
+    await page
+      .locator(".video-tile video")
+      .evaluateAll(
+        (v) =>
+          v.every((x) => Math.abs(x.volume - 0.3) < 0.03) &&
+          v.filter((x) => !x.muted).length === 1,
+      ),
+  );
+  await popup
+    .getByRole("button", { name: "全部 1.5 倍速", exact: true })
+    .click();
+  check(
+    "unified speed reaches every real player",
+    await page
+      .locator(".video-tile video")
+      .evaluateAll((v) => v.every((x) => x.playbackRate === 1.5)),
+  );
+  await popup
+    .getByRole("button", { name: "收起统一播放设置", exact: true })
+    .click();
+  await tile.locator(".tile-shade").click({ position: { x: 25, y: 50 } });
+  await page.keyboard.press("Space");
+  await until(
+    async () =>
+      await page
+        .locator(".video-tile video")
+        .evaluateAll((v) => v.every((x) => x.paused)),
+  );
+  await page.getByRole("button", { name: "统一播放设置", exact: true }).click();
+  await dragRange(
+    popup.getByRole("slider", { name: "统一进度", exact: true }),
+    0.2,
+  );
+  await popup
+    .getByRole("button", { name: "全部 1.25 倍速", exact: true })
+    .click();
+  check(
+    "unified seeking and speed changes keep paused players paused",
+    await page
+      .locator(".video-tile video")
+      .evaluateAll((v) =>
+        v.every(
+          (x) =>
+            x.paused &&
+            x.playbackRate === 1.25 &&
+            x.currentTime > 3 &&
+            x.currentTime < 7,
+        ),
+      ),
+  );
+  await popup.getByRole("button", { name: "全部 1 倍速", exact: true }).click();
+  await popup.getByRole("button", { name: "统一静音", exact: true }).click();
+  await popup
+    .getByRole("button", { name: "收起统一播放设置", exact: true })
+    .click();
+  await tile.locator(".tile-shade").click({ position: { x: 25, y: 50 } });
+  await page.keyboard.press("Space");
+  await resetProgress();
+  await until(
+    async () =>
+      await wall.evaluate((el) => el.classList.contains("controls-idle")),
+    6000,
+  );
+  await page.keyboard.press("Tab");
+  await page.waitForTimeout(3100);
+  check(
+    "keyboard navigation restores controls and keeps focused actions visible",
+    await wall.evaluate(
+      (el) =>
+        !el.classList.contains("controls-idle") &&
+        el.querySelector(".wall-toolbar").contains(document.activeElement),
+    ),
+  );
+  await page.evaluate(() => document.exitFullscreen());
+  await page.waitForTimeout(650);
+  await page.getByRole("button", { name: "统一播放设置", exact: true }).click();
+  await page.waitForTimeout(650);
+  await take("light-unified-controls.png");
+  const normal = await popup.evaluate((el) => {
+    const r = el.getBoundingClientRect(),
+      b = document
+        .querySelector(".wall-controls-trigger")
+        .getBoundingClientRect();
+    return r.top >= b.bottom && r.width < 360 && !document.fullscreenElement;
+  });
+  await page.locator(".page-heading h1").click();
+  await popup.waitFor({ state: "detached" });
+  check(
+    "windowed dropdown stays compact and dismisses on outside click",
+    normal && (await popup.count()) === 0,
+  );
+  await page.getByRole("button", { name: "统一播放设置", exact: true }).click();
+  await popup
+    .getByRole("slider", { name: "统一进度", exact: true })
+    .press("Escape");
+  await popup.waitFor({ state: "detached" });
+  check(
+    "Escape dismisses the dropdown and restores button focus",
+    (await popup.count()) === 0 &&
+      (await page
+        .getByRole("button", { name: "统一播放设置", exact: true })
+        .evaluate((el) => el === document.activeElement)),
+  );
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await resetProgress();
+  if (await page.getByRole("button", { name: "全部暂停", exact: true }).count())
+    await page.getByRole("button", { name: "全部暂停", exact: true }).click();
+  await page.getByRole("button", { name: "播放全部", exact: true }).click();
+}
 async function main() {
   temporary = await mkdtemp(join(tmpdir(), "vexa-desktop-test-"));
   const fixtures = join(output, "fixtures", "测试视频 with spaces"),
@@ -454,7 +711,7 @@ async function main() {
       .locator(".wall-panel")
       .evaluate((el) => el.classList.contains("is-fullscreen")),
   );
-  await page.evaluate(() => document.exitFullscreen());
+  await exercisePlaybackControls();
   const leftBefore = await page
     .locator(".video-tile")
     .first()
@@ -838,10 +1095,14 @@ async function main() {
   results.success = true;
 }
 main()
-  .catch((error) => {
+  .catch(async (error) => {
     results.success = false;
     results.failure = error.stack;
     console.error(error);
+    if (page && !page.isClosed())
+      await page
+        .screenshot({ path: join(output, "desktop-failure.png") })
+        .catch(() => {});
   })
   .finally(async () => {
     if (app) await app.close().catch(() => {});

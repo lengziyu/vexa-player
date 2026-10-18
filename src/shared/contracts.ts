@@ -2,6 +2,7 @@ export type ThemeMode = "dark" | "light" | "system";
 export type Accent = "violet" | "sage" | "sand";
 export type LayoutMode = "smart" | "focus" | "grid";
 export type ThumbnailSize = "small" | "medium" | "large";
+export const PLAYBACK_SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 export type ResolutionFilter = "all" | "sd" | "hd" | "fhd" | "qhd" | "uhd";
 export type OrientationFilter = "all" | "landscape" | "portrait" | "square";
 export interface Settings {
