@@ -1,10 +1,12 @@
 # Vexa Player
 
-一个完全离线的本地多视频播放器。当前版本为 **0.2 开发版**：从本地文件/文件夹导入，建立 SQLite 视频库，再创建最多 16 个画面的播放墙。
+一个完全离线的本地多视频播放器。当前版本为 **0.2.1 开发版**：从本地文件/文件夹导入，建立 SQLite 视频库，再创建最多 16 个画面的播放墙。
 
-**下载安装：[Windows x64 安装包（v0.2.0）](https://github.com/lengziyu/vexa-player/releases/download/v0.2.0/Vexa-Player-0.2.0-Windows-x64.exe)** · [发布页与校验文件](https://github.com/lengziyu/vexa-player/releases/tag/v0.2.0)
+**下载安装：[Windows x64 安装包（v0.2.1）](https://github.com/lengziyu/vexa-player/releases/download/v0.2.1/Vexa-Player-0.2.1-Windows-x64.exe)** · [发布页与校验文件](https://github.com/lengziyu/vexa-player/releases/tag/v0.2.1)
 
 下载 `.exe` 后运行安装即可。当前提供 Windows 64 位开发版；macOS 安装包尚未发布。
+
+0.2.1 的离线安装包从约 **160 MB 缩至 127 MB（减少 20.5%）**，安装后占用减少约 91 MB，保留原有离线导入、封面生成和播放能力。体积对比与检查记录见[自测报告](docs/SELF_TEST.md)。
 
 ## 已接通的功能
 
@@ -67,11 +69,12 @@ npm test
 npm run test:desktop
 npm run pack
 npm run dist:win
+npm run test:package
 ```
 
 桌面测试使用生成的真实 H.264/AAC 视频与独立临时数据目录，不访问用户的视频库。检查记录输出到 `test-results/desktop-results.json`，截图输出到 `docs/screenshots/`。短时多路测试不代替真实收藏视频与不同显卡上的长期性能验收。
 
-Windows 安装包输出到 `release/`。macOS 应在对应架构的 Mac 或 CI 中独立安装依赖后执行 `npm run dist:mac`；Intel 与 Apple Silicon 分别构建、运行并验证 FFmpeg/FFprobe 的架构，不能直接复用 Windows 的 node_modules。签名与公证需要发布者自己的凭据。
+Windows 安装包输出到 `release/<版本号>/`。macOS 应在对应架构的 Mac 或 CI 中独立安装依赖后执行 `npm run dist:mac`；Intel 与 Apple Silicon 分别构建、运行并验证 FFmpeg/FFprobe 的架构，不能直接复用 Windows 的 node_modules。签名与公证需要发布者自己的凭据。
 
 ## 支持边界
 

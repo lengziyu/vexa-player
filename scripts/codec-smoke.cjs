@@ -24,7 +24,7 @@ async function main() {
     const result=spawnSync(ffmpeg,['-nostdin','-v','error','-f','lavfi','-i','testsrc2=size=320x180:rate=24','-f','lavfi','-i','anullsrc=r=48000:cl=stereo','-t','5',...definition.args,'-threads','2','-y',file],{windowsHide:true,timeout:45000});
     assert.equal(result.status,0,result.stderr?.toString());files.push(file);
   }
-  app=await _electron.launch({executablePath:process.env.VEXA_TEST_EXECUTABLE||require('electron'),args:process.env.VEXA_TEST_EXECUTABLE?[]:['.'],cwd:project,env:{...process.env,ELECTRON_RUN_AS_NODE:undefined,VEXA_DATA_DIR:join(temporary,'data')},timeout:30000});
+  app=await _electron.launch({executablePath:process.env.VEXA_TEST_EXECUTABLE||require('electron'),args:[...(process.env.VEXA_TEST_EXECUTABLE?[]:['.']),`--user-data-dir=${join(temporary,'data')}`],cwd:project,env:{...process.env,ELECTRON_RUN_AS_NODE:undefined,VEXA_DATA_DIR:join(temporary,'data')},timeout:30000});
   const page=await app.firstWindow();await page.waitForFunction(()=>!!window.vexa);
   await page.evaluate(()=>window.vexa.setSettings({cacheEnabled:false,autoNext:false}));
   await app.evaluate(({dialog},files)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:files})},files);

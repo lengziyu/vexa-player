@@ -43,7 +43,10 @@ async function launch(dataDir) {
     process.env.VEXA_TEST_EXECUTABLE || require("electron");
   app = await _electron.launch({
     executablePath,
-    args: process.env.VEXA_TEST_EXECUTABLE ? [] : ["."],
+    args: [
+      ...(process.env.VEXA_TEST_EXECUTABLE ? [] : ["."]),
+      `--user-data-dir=${dataDir}`,
+    ],
     cwd: project,
     env: {
       ...process.env,

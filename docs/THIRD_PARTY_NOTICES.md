@@ -25,6 +25,8 @@
 
 GPL 完整文本保存在 [licenses/GPL-3.0.txt](licenses/GPL-3.0.txt)。FFmpeg 自带构建与源码说明同时保留在 `node_modules/ffmpeg-static/ffmpeg.exe.README`、`ffmpeg.exe.LICENSE`；打包时保留这些文件。
 
+Vue 与 Pinia 编译进界面资源，不再重复分发其完整 npm 包；MIT 完整许可保存在 [Vue-MIT.txt](licenses/Vue-MIT.txt) 和 [Pinia-MIT.txt](licenses/Pinia-MIT.txt)，随安装包保留。Electron 与 Chromium 自带许可、媒体工具二进制与许可不参与裁剪。
+
 FFmpeg 构建说明给出的源码标识：[FFmpeg e38092ef93](https://github.com/FFmpeg/FFmpeg/commit/e38092ef93)。FFprobe 源码标识来自二进制版本字符串：[FFmpeg 2296078397](https://github.com/FFmpeg/FFmpeg/commit/2296078397)。构建提供者：[Gyan FFmpeg builds](https://www.gyan.dev/ffmpeg/builds/)，下载包装器：[ffmpeg-static](https://github.com/eugeneware/ffmpeg-static)、[ffprobe-installer](https://github.com/SavageCore/node-ffprobe-installer)。
 
 对外分发前需为实际打包的平台、架构和构建准备完整对应源码、构建材料与第三方许可，不能只凭 npm 包的 license 字段或普通源码链接宣称已完成分发义务。本次本地测试包不等于公开发布。

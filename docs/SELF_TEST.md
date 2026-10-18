@@ -1,6 +1,6 @@
-# Vexa 0.2 自测报告
+# Vexa 0.2.1 自测报告
 
-日期：2026-10-19。结论：**0.2 开发版已完成组合筛选、视频库虚拟滚动和播放资源控制，Windows 打包程序完成全流程复测；尚未宣称完整 MVP 或跨平台正式验收完成。**
+日期：2026-10-19。结论：**0.2.1 开发版在保留离线功能的基础上精简安装包，Windows 打包程序完成全流程复测；尚未宣称完整 MVP 或跨平台正式验收完成。**
 
 ## 环境
 
@@ -21,11 +21,29 @@
 | 正式构建 | 主进程、后台 Worker、预加载和 Vue 界面均通过 |
 | Windows x64 应用目录 | 已生成并以该目录中的 exe 实际运行测试 |
 | Windows NSIS 安装包 | 已生成；未执行系统安装和卸载 |
+| 分发内容与安装器内嵌档案检查 | 8 项通过，包含解压 CRC、媒体工具哈希、运行资源与许可证保留 |
 | npm audit | 0 个已报告依赖漏洞；此结果不代表原生二进制安全审计 |
 
 47 项核心测试覆盖：1～16 路布局、随机去重、Range 与 IPC 校验、真实扫描/封面/损坏隔离/SQLite 持久化；新增组合筛选的输入校验和 SQL 结果、虚拟网格几何与边界、有限页缓存、过期请求隔离、跨页选择、持续扫描刷新、掉帧判定，以及资源暂停/放大暂停/手动暂停/隐私隐藏的组合恢复、结束后重播、旧播放请求失败隔离和小幅跳转计时。
 
 39 项桌面流程覆盖：渲染沙箱、路径授权、主题与系统即时外观、真实导入/封面/Range、三路播放、布局实例保留、独立暂停/倍速/声音路由、全屏/拖拽/锁定/换片、全局暂停与追加、4/9/16 路播放、隐私恢复与输入隔离、收藏及缓存、重启持久化；新增真实属性组合筛选、空结果重置、资源模式与手动暂停恢复、放大暂停恢复、键盘收藏、大库末页滚动、跨未加载页选择/全选、竖屏短边画质筛选、缩略图三档密度、窄窗无横向溢出。
+
+## 0.2.1 安装包精简
+
+对比 0.2.0 已发布安装包与 0.2.1 最终构建，MiB 按 1,048,576 字节计算。
+
+| 项目 | 0.2.0 | 0.2.1 |
+| --- | --- | --- |
+| Windows x64 离线安装包 | 159.70 MiB | 127.00 MiB |
+| 完整应用目录 | 569.77 MiB | 479.14 MiB |
+| 应用资源 app.asar | 44.95 MiB | 1.50 MiB |
+| Electron 语言包 | 55 | 2（简体中文、英语） |
+
+下载体积减少 **34,284,251 字节（20.47%）**；安装后占用减少约 90.63 MiB。清理重复的 Vue/Pinia npm 分发副本、sql.js 备用/调试/ZIP 构建和未使用语言资源，关闭尚未使用的差分更新压缩，采用离线 solid + BCJ2 压缩。
+
+FFmpeg、FFprobe 与此前使用的二进制 SHA-256 一致；Electron 自带编解码库、软件渲染后备和许可证保留。未增加运行时联网下载。`npm run test:package` 实际定位安装器内嵌 7z 并通过完整解压/CRC 检查，同时检查必需文件和精简规则。此检查不替代真实安装、升级和卸载验收。
+
+桌面和编码脚本显式指定独立 `--user-data-dir`，可与用户正在运行的旧版共存，测试只访问临时资料。
 
 ## 大视频库与资源控制
 
@@ -42,8 +60,8 @@
 
 | 同时播放路数 | 采样时长 | 总视频帧增量 | 丢帧增量 | 结论 |
 | --- | --- | --- | --- | --- |
-| 4 | 4 秒 | 480 | 0 | 各画面时间推进，无播放错误 |
-| 9 | 4 秒 | 1075 | 0 | 各画面时间推进，无播放错误 |
+| 4 | 4 秒 | 477 | 0 | 各画面时间推进，无播放错误 |
+| 9 | 4 秒 | 1080 | 0 | 各画面时间推进，无播放错误 |
 | 16 | 4 秒 | 1920 | 0 | 各画面时间推进，无播放错误 |
 
 这是播放链路的短时冒烟测试，**不等于 30 分钟稳定性或高运动/高码率视频性能验收**。未采集可靠的 CPU/GPU/显存占用，也未确认每路实际硬解方式；界面据此显示“硬件解码未确认”。不能外推为所有电脑的 16 路性能保证。
@@ -85,20 +103,21 @@ npm run typecheck
 npm test
 npm run test:desktop
 npm run dist:win
+npm run test:package
 
 # 复测打包后的实际程序
-$env:VEXA_TEST_EXECUTABLE = (Resolve-Path -LiteralPath 'release\win-unpacked\Vexa Player.exe').Path
+$env:VEXA_TEST_EXECUTABLE = (Resolve-Path -LiteralPath 'release\0.2.1\win-unpacked\Vexa Player.exe').Path
 node scripts/desktop-smoke.cjs
 node scripts/codec-smoke.cjs
 ```
 
 - 流程脚本：`scripts/desktop-smoke.cjs`。
 - 编码脚本：`scripts/codec-smoke.cjs`。
-- 最近一次原始记录：`test-results/desktop-results.json`、`test-results/codec-results.json`（不纳入 Git）。
+- 最近一次原始记录：`test-results/desktop-results.json`、`test-results/codec-results.json`、`test-results/package-results.json`（不纳入 Git）。
 - 本次留存记录：[test-summary.json](test-summary.json)。
 - 界面截图：[浅色视频库](screenshots/light-library.png)、[深色视频库](screenshots/dark-library.png)、[浅色播放墙](screenshots/light-wall.png)、[深色播放墙](screenshots/dark-wall.png)、[浅色偏好设置](screenshots/light-settings.png)、[安全首页](screenshots/light-welcome.png)。
-- 可运行程序：`release/win-unpacked/Vexa Player.exe`，需保留整个目录。
-- 安装包：`release/Vexa-Player-0.2.0-Windows-x64.exe`。
+- 可运行程序：`release/0.2.1/win-unpacked/Vexa Player.exe`，需保留整个目录。
+- 安装包：`release/0.2.1/Vexa-Player-0.2.1-Windows-x64.exe`。
 
 ## 尚未完成的验收与功能
 

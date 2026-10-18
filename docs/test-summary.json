@@ -1,18 +1,58 @@
 {
   "date": "2026-10-19",
-  "version": "0.2.0",
-  "testedExecutable": "release/win-unpacked/Vexa Player.exe",
+  "version": "0.2.1",
+  "testedExecutable": "release/0.2.1/win-unpacked/Vexa Player.exe",
   "unitTests": {
-    "files": 9,
-    "passed": 47
+    "passed": 47,
+    "files": 9
   },
   "audit": {
     "reportedVulnerabilities": 0
   },
   "installer": {
-    "path": "release/Vexa-Player-0.2.0-Windows-x64.exe",
-    "sha256": "72CC41C55832901A102CEF174C9FB92BF503D23820DD7519DAC0B75F882E1FB1",
-    "bytes": 167455935
+    "path": "release/0.2.1/Vexa-Player-0.2.1-Windows-x64.exe",
+    "bytes": 133171684,
+    "sha256": "4358b2ea6487a33550bd7b42a985d861bc17dfb9adfe46c4d98d483a1ddc288b"
+  },
+  "packaging": {
+    "success": true,
+    "checks": [
+      "SQL runtime loader and WebAssembly are retained",
+      "unused SQL distributions and zip archives are excluded",
+      "renderer dependencies are bundled instead of duplicated",
+      "renderer and third-party licenses are retained",
+      "only the supported Electron locales are shipped",
+      "runtime codec, rendering fallback and legal files are retained",
+      "FFmpeg and FFprobe match the previously used binaries",
+      "embedded installer archive passes decompression and CRC checks"
+    ],
+    "baseline": {
+      "version": "0.2.0",
+      "installerBytes": 167455935,
+      "installedBytes": 597444605,
+      "asarBytes": 47135291,
+      "locales": 55
+    },
+    "current": {
+      "version": "0.2.1",
+      "installerBytes": 133171684,
+      "installerSha256": "4358b2ea6487a33550bd7b42a985d861bc17dfb9adfe46c4d98d483a1ddc288b",
+      "installedBytes": 502413369,
+      "asarBytes": 1568863,
+      "locales": 2
+    },
+    "savedInstallerBytes": 34284251,
+    "savedInstallerPercent": 20.47359563577128,
+    "media": [
+      {
+        "path": "ffmpeg-static/ffmpeg.exe",
+        "sha256": "04e1307997530f9cf2fe35cba2ca7e8875ca91da02f89d6c7243df819c94ad00"
+      },
+      {
+        "path": "@ffprobe-installer/win32-x64/ffprobe.exe",
+        "sha256": "f28c4751e7367205267025aaf0fcfc921e34d9b7edaa46bd9c8abaf367fc9051"
+      }
+    ]
   },
   "desktop": {
     "checks": [
@@ -271,34 +311,34 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.975295,
+            "currentTime": 3.977654,
             "paused": false,
             "error": null,
-            "frames": 120,
+            "frames": 119,
             "dropped": 0
           },
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.975329,
+            "currentTime": 3.977683,
             "paused": false,
             "error": null,
-            "frames": 120,
+            "frames": 119,
             "dropped": 0
           },
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.975316,
+            "currentTime": 3.977659,
             "paused": false,
             "error": null,
-            "frames": 120,
+            "frames": 119,
             "dropped": 0
           },
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.975313,
+            "currentTime": 3.977647,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -314,7 +354,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.978864,
+            "currentTime": 3.975187,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -323,7 +363,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.978887,
+            "currentTime": 3.975216,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -332,7 +372,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.97887,
+            "currentTime": 3.975194,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -341,7 +381,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.978866,
+            "currentTime": 3.975187,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -350,46 +390,46 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.978857,
+            "currentTime": 3.975174,
             "paused": false,
             "error": null,
-            "frames": 119,
+            "frames": 120,
             "dropped": 0
           },
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.978853,
+            "currentTime": 3.975163,
             "paused": false,
             "error": null,
-            "frames": 119,
+            "frames": 120,
             "dropped": 0
           },
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.978848,
+            "currentTime": 3.975157,
             "paused": false,
             "error": null,
-            "frames": 119,
+            "frames": 120,
             "dropped": 0
           },
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.978842,
+            "currentTime": 3.975148,
             "paused": false,
             "error": null,
-            "frames": 119,
+            "frames": 120,
             "dropped": 0
           },
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.978841,
+            "currentTime": 3.975141,
             "paused": false,
             "error": null,
-            "frames": 119,
+            "frames": 120,
             "dropped": 0
           }
         ]
@@ -402,7 +442,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.985324,
+            "currentTime": 3.989078,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -411,7 +451,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.985349,
+            "currentTime": 3.991123,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -420,7 +460,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.984345,
+            "currentTime": 3.989114,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -429,7 +469,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.984339,
+            "currentTime": 3.989108,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -438,7 +478,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.984335,
+            "currentTime": 3.989102,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -447,7 +487,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.98433,
+            "currentTime": 3.989087,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -456,7 +496,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.984319,
+            "currentTime": 3.98908,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -465,7 +505,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.984315,
+            "currentTime": 3.989075,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -474,7 +514,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.98431,
+            "currentTime": 3.989065,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -483,7 +523,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.984302,
+            "currentTime": 3.989059,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -492,43 +532,7 @@
           {
             "width": 1920,
             "height": 1080,
-            "currentTime": 3.984298,
-            "paused": false,
-            "error": null,
-            "frames": 120,
-            "dropped": 0
-          },
-          {
-            "width": 1921,
-            "height": 1080,
-            "currentTime": 3.984289,
-            "paused": false,
-            "error": null,
-            "frames": 120,
-            "dropped": 0
-          },
-          {
-            "width": 1921,
-            "height": 1080,
-            "currentTime": 3.984188,
-            "paused": false,
-            "error": null,
-            "frames": 120,
-            "dropped": 0
-          },
-          {
-            "width": 1921,
-            "height": 1080,
-            "currentTime": 3.984175,
-            "paused": false,
-            "error": null,
-            "frames": 120,
-            "dropped": 0
-          },
-          {
-            "width": 1921,
-            "height": 1080,
-            "currentTime": 3.984161,
+            "currentTime": 3.989054,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -537,7 +541,43 @@
           {
             "width": 1920,
             "height": 1080,
-            "currentTime": 3.98415,
+            "currentTime": 3.989043,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.989036,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.989031,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.98902,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.989015,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -584,7 +624,7 @@
         "electron": "44.9.0",
         "chrome": "152.0.7977.167"
       },
-      "version": "0.2.0"
+      "version": "0.2.1"
     },
     "success": true
   },
@@ -598,7 +638,7 @@
         "playing": true,
         "width": 320,
         "height": 180,
-        "currentTime": 1.682141,
+        "currentTime": 1.658308,
         "error": null,
         "visibleError": null
       },
@@ -607,7 +647,7 @@
         "playing": true,
         "width": 320,
         "height": 180,
-        "currentTime": 1.661119,
+        "currentTime": 1.654331,
         "error": null,
         "visibleError": null
       },
@@ -616,7 +656,7 @@
         "playing": true,
         "width": 320,
         "height": 180,
-        "currentTime": 1.671884,
+        "currentTime": 1.647906,
         "error": null,
         "visibleError": null
       },
@@ -625,7 +665,7 @@
         "playing": true,
         "width": 320,
         "height": 180,
-        "currentTime": 1.631178,
+        "currentTime": 1.600293,
         "error": null,
         "visibleError": null
       },
@@ -643,7 +683,7 @@
         "playing": true,
         "width": 320,
         "height": 180,
-        "currentTime": 1.674179,
+        "currentTime": 1.663173,
         "error": null,
         "visibleError": null
       }
