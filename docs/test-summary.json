@@ -1,0 +1,652 @@
+{
+  "date": "2026-10-19",
+  "version": "0.2.0",
+  "testedExecutable": "release/win-unpacked/Vexa Player.exe",
+  "unitTests": {
+    "files": 9,
+    "passed": 47
+  },
+  "audit": {
+    "reportedVulnerabilities": 0
+  },
+  "installer": {
+    "path": "release/Vexa-Player-0.2.0-Windows-x64.exe",
+    "sha256": "72CC41C55832901A102CEF174C9FB92BF503D23820DD7519DAC0B75F882E1FB1",
+    "bytes": 167455935
+  },
+  "desktop": {
+    "checks": [
+      {
+        "name": "sandboxed renderer",
+        "passed": true
+      },
+      {
+        "name": "arbitrary path IPC denied",
+        "passed": true
+      },
+      {
+        "name": "system appearance changes apply live",
+        "passed": true
+      },
+      {
+        "name": "real file import, metadata, thumbnails and corrupt file isolation",
+        "passed": true,
+        "detail": {
+          "total": 17,
+          "statuses": [
+            [
+              "01-alpine.mp4",
+              "ready"
+            ],
+            [
+              "02-dunes.mp4",
+              "ready"
+            ],
+            [
+              "03-forest.mp4",
+              "ready"
+            ],
+            [
+              "04-coast.mp4",
+              "ready"
+            ],
+            [
+              "05-video.mp4",
+              "ready"
+            ],
+            [
+              "06-video.mp4",
+              "ready"
+            ],
+            [
+              "07-video.mp4",
+              "ready"
+            ],
+            [
+              "08-video.mp4",
+              "ready"
+            ],
+            [
+              "09-video.mp4",
+              "ready"
+            ],
+            [
+              "10-video.mp4",
+              "ready"
+            ],
+            [
+              "11-video.mp4",
+              "ready"
+            ],
+            [
+              "12-video.mp4",
+              "ready"
+            ],
+            [
+              "13-video.mp4",
+              "ready"
+            ],
+            [
+              "14-video.mp4",
+              "ready"
+            ],
+            [
+              "15-video.mp4",
+              "ready"
+            ],
+            [
+              "16-video.mp4",
+              "ready"
+            ],
+            [
+              "broken.mp4",
+              "error"
+            ]
+          ]
+        }
+      },
+      {
+        "name": "media seeking uses exact byte ranges",
+        "passed": true,
+        "detail": {
+          "status": 206,
+          "length": 32,
+          "range": "bytes 0-31/1775544"
+        }
+      },
+      {
+        "name": "combined property filters match real metadata",
+        "passed": true
+      },
+      {
+        "name": "empty filtered results provide a clear reset",
+        "passed": true
+      },
+      {
+        "name": "three real 1080p H.264/AAC videos play",
+        "passed": true
+      },
+      {
+        "name": "layout switches preserve instances and playback",
+        "passed": true
+      },
+      {
+        "name": "independent pause keeps other streams playing",
+        "passed": true
+      },
+      {
+        "name": "resource mode pauses non-main streams",
+        "passed": true
+      },
+      {
+        "name": "resource mode preserves manual pauses on restore",
+        "passed": true
+      },
+      {
+        "name": "zoom suspension restores only previously playing streams",
+        "passed": true
+      },
+      {
+        "name": "independent speed does not alter other streams",
+        "passed": true
+      },
+      {
+        "name": "only focus stream is audible",
+        "passed": true
+      },
+      {
+        "name": "fullscreen fills the available wall",
+        "passed": true
+      },
+      {
+        "name": "drag exchange preserves the original video element",
+        "passed": true
+      },
+      {
+        "name": "locked frame survives random replacement",
+        "passed": true
+      },
+      {
+        "name": "global pause reaches every video",
+        "passed": true
+      },
+      {
+        "name": "adding while paused preserves global pause",
+        "passed": true
+      },
+      {
+        "name": "4-stream 1080p playback smoke",
+        "passed": true
+      },
+      {
+        "name": "9-stream 1080p playback smoke",
+        "passed": true
+      },
+      {
+        "name": "16-stream 1080p playback smoke",
+        "passed": true
+      },
+      {
+        "name": "privacy hide from text input restores paused and muted",
+        "passed": true
+      },
+      {
+        "name": "typing shortcuts does not trigger playback",
+        "passed": true
+      },
+      {
+        "name": "keyboard favorite does not trigger card playback",
+        "passed": true
+      },
+      {
+        "name": "favorite filter shows persisted selection",
+        "passed": true
+      },
+      {
+        "name": "cache cleared without removing videos",
+        "passed": true
+      },
+      {
+        "name": "theme persisted across app restart",
+        "passed": true
+      },
+      {
+        "name": "SQLite library and favorites survive restart",
+        "passed": true
+      },
+      {
+        "name": "large library renders a bounded number of cards",
+        "passed": true,
+        "detail": {
+          "indexed": 3017,
+          "rendered": 30
+        }
+      },
+      {
+        "name": "scrolling loads the final page without keeping all cards mounted",
+        "passed": true
+      },
+      {
+        "name": "shift selection spans unloaded library pages",
+        "passed": true
+      },
+      {
+        "name": "select all includes the complete filtered library",
+        "passed": true
+      },
+      {
+        "name": "portrait 1080p uses short edge resolution with status filter",
+        "passed": true
+      },
+      {
+        "name": "thumbnail size controls change card density",
+        "passed": true,
+        "detail": [
+          180.828125,
+          280.25,
+          379.65625
+        ]
+      },
+      {
+        "name": "library filters fit a narrow desktop window",
+        "passed": true
+      },
+      {
+        "name": "no unexpected renderer errors",
+        "passed": true,
+        "detail": []
+      },
+      {
+        "name": "no external requests",
+        "passed": true,
+        "detail": []
+      }
+    ],
+    "performance": [
+      {
+        "streams": 4,
+        "sampleSeconds": 4,
+        "syntheticLowComplexity": true,
+        "stats": [
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.975295,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.975329,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.975316,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.975313,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          }
+        ]
+      },
+      {
+        "streams": 9,
+        "sampleSeconds": 4,
+        "syntheticLowComplexity": true,
+        "stats": [
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.978864,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.978887,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.97887,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.978866,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.978857,
+            "paused": false,
+            "error": null,
+            "frames": 119,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.978853,
+            "paused": false,
+            "error": null,
+            "frames": 119,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.978848,
+            "paused": false,
+            "error": null,
+            "frames": 119,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.978842,
+            "paused": false,
+            "error": null,
+            "frames": 119,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.978841,
+            "paused": false,
+            "error": null,
+            "frames": 119,
+            "dropped": 0
+          }
+        ]
+      },
+      {
+        "streams": 16,
+        "sampleSeconds": 4,
+        "syntheticLowComplexity": true,
+        "stats": [
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.985324,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.985349,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.984345,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.984339,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.984335,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.98433,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.984319,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.984315,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.98431,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.984302,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1920,
+            "height": 1080,
+            "currentTime": 3.984298,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.984289,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.984188,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.984175,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.984161,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1920,
+            "height": 1080,
+            "currentTime": 3.98415,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          }
+        ]
+      }
+    ],
+    "errors": [],
+    "externalRequests": [],
+    "runtime": {
+      "platform": "win32",
+      "arch": "x64",
+      "versions": {
+        "node": "24.22.0",
+        "acorn": "8.18.0",
+        "ada": "4.0.0",
+        "amaro": "1.1.11",
+        "ares": "1.34.8",
+        "brotli": "1.2.0",
+        "cldr": "48.0",
+        "icu": "78.2",
+        "llhttp": "9.4.3",
+        "merve": "1.2.2",
+        "modules": "149",
+        "napi": "10",
+        "nbytes": "0.1.4",
+        "ncrypto": "0.0.1",
+        "nghttp2": "1.70.0",
+        "nghttp3": "",
+        "ngtcp2": "",
+        "openssl": "0.0.0",
+        "simdjson": "4.6.11",
+        "simdutf": "7.7.0",
+        "sqlite": "3.53.4",
+        "tz": "2026d",
+        "undici": "7.29.1",
+        "unicode": "17.0",
+        "uv": "1.52.1",
+        "uvwasi": "0.0.23",
+        "v8": "15.2.124.43-electron.0",
+        "zlib": "1.3.2.1-motley",
+        "zstd": "1.6.0",
+        "electron": "44.9.0",
+        "chrome": "152.0.7977.167"
+      },
+      "version": "0.2.0"
+    },
+    "success": true
+  },
+  "codecs": {
+    "success": true,
+    "platform": "win32",
+    "arch": "x64",
+    "results": [
+      {
+        "name": "AV1-Opus.mkv",
+        "playing": true,
+        "width": 320,
+        "height": 180,
+        "currentTime": 1.682141,
+        "error": null,
+        "visibleError": null
+      },
+      {
+        "name": "H264-AAC.mkv",
+        "playing": true,
+        "width": 320,
+        "height": 180,
+        "currentTime": 1.661119,
+        "error": null,
+        "visibleError": null
+      },
+      {
+        "name": "H264-AAC.mp4",
+        "playing": true,
+        "width": 320,
+        "height": 180,
+        "currentTime": 1.671884,
+        "error": null,
+        "visibleError": null
+      },
+      {
+        "name": "HEVC-AAC.mp4",
+        "playing": true,
+        "width": 320,
+        "height": 180,
+        "currentTime": 1.631178,
+        "error": null,
+        "visibleError": null
+      },
+      {
+        "name": "MPEG4-MP3.avi",
+        "playing": false,
+        "width": 0,
+        "height": 0,
+        "currentTime": 0,
+        "error": null,
+        "visibleError": "当前播放内核不支持此媒体组合（mpeg4）"
+      },
+      {
+        "name": "VP9-Opus.webm",
+        "playing": true,
+        "width": 320,
+        "height": 180,
+        "currentTime": 1.674179,
+        "error": null,
+        "visibleError": null
+      }
+    ]
+  }
+}
