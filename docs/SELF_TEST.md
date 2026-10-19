@@ -2,6 +2,8 @@
 
 日期：2026-10-19。结论：Windows x64 开发版通过下列检查；桌面、容量、登录面板、真实下载及编码检查均直接运行最终打包目录中的程序。安装器实际安装/卸载和长期性能验收仍未完成。
 
+同日补充 macOS Apple Silicon 包：在 Apple M4、24 GiB、macOS 26.5.1 上，从最终 DMG 挂载复制出的应用通过 80 项桌面、12 项容量与倍速、26 项登录、16 项真实下载和 17 项安装包检查；110 项单元测试与生产构建通过。6 种编码样本中 5 种播放，AVI 显示不支持提示。DMG 为 134,346,684 字节，SHA-256 为 `eb6976506a4e785493a22ef3f3832f397b5a071ef82cddcf3314758ab751cef4`；ad-hoc 签名，未经 Apple 公证。完整 macOS 记录与范围限制见[独立说明](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/macOS-arm64-SELF_TEST.txt)和[测试记录](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/macOS-arm64-test-summary.json)。以下环境与详细表格继续保留原 Windows 测试记录。
+
 ## 环境与隔离
 
 Windows 11 x64（10.0.26200），Intel Core i5-12490F、32 GB 内存、NVIDIA GeForce RTX 3060。Electron 44.9.0、Chromium 152.0.7977.167、内置 Node.js 24.22.0。自动化使用独立临时视频库与应用目录，不读取用户账号、登录信息或真实视频资料。正式应用初始为空库。
@@ -77,7 +79,7 @@ SHA-256：`29a9a0e476bd9915c8dc315d2c1740f02e27809121bf83d0e52fd6779aa293fa`。
 
 编码测试为 320×180、24fps、5 秒真实视频：MP4 H.264/AAC、MKV H.264/AAC、WebM VP9/Opus、MP4 HEVC 8-bit/AAC、MKV AV1/Opus 可播放；AVI MPEG-4 Part 2/MP3 显示当前内核不支持，其他画面正常播放。测试为静音音轨，未做音频听感验收，也不代表 HEVC 10-bit、4K、HDR 或全部格式均已支持。
 
-macOS、Windows 10、其他显卡、长期内存/显存稳定性及高码率多路压力未验收。X 任务暂不跨重启保存，登录后也受平台和账号权限限制。
+macOS Intel、其他 macOS 版本、Windows 10、其他显卡、长期内存/显存稳定性及高码率多路压力未验收。X 任务暂不跨重启保存，登录后也受平台和账号权限限制。
 
 ## 复现与记录
 

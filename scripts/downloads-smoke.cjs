@@ -9,6 +9,7 @@ const {
   writeFile,
   rm,
   stat,
+  realpath,
 } = require("node:fs/promises");
 const { join, resolve } = require("node:path");
 const { tmpdir } = require("node:os");
@@ -84,10 +85,11 @@ async function until(predicate, timeout = 30000) {
     });
   }, destination);
   await page.getByRole("button", { name: "选择位置", exact: true }).click();
+  const canonicalDestination = await realpath(destination);
   await until(
     async () =>
       (await page.evaluate(() => window.vexa.downloads.snapshot())).preferences
-        .directory === destination,
+        .directory === canonicalDestination,
   );
   await page.getByRole("button", { name: "下载设置", exact: true }).click();
   await selectOption(

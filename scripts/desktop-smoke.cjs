@@ -41,6 +41,15 @@ async function until(predicate, timeout = 30000) {
   }
   throw new Error("Timed out waiting for desktop state");
 }
+async function waitForFullscreen(active) {
+  await page.waitForFunction(expected => !!document.fullscreenElement === expected, active, { timeout: 15000 });
+  if (process.platform === "darwin")
+    await until(() => app.evaluate((_electron, expected) => global.__vexaNativeFullscreen === expected, active), 15000);
+}
+async function exitFullscreen() {
+  await page.evaluate(() => { void document.exitFullscreen(); });
+  await waitForFullscreen(false);
+}
 async function launch(dataDir) {
   const executablePath =
     process.env.VEXA_TEST_EXECUTABLE || require("electron");
@@ -69,9 +78,14 @@ async function launch(dataDir) {
   page = await app.firstWindow();
   // CDP input still reaches the renderer; physical mouse movement on the shared
   // desktop must not reset the inactivity timer during this automated run.
-  await app.evaluate(({ BrowserWindow }) =>
-    BrowserWindow.getAllWindows()[0].setIgnoreMouseEvents(true),
-  );
+  await app.evaluate(({ BrowserWindow }) => {
+    const window = BrowserWindow.getAllWindows()[0];
+    window.setIgnoreMouseEvents(true);
+    // macOS native fullscreen transitions complete after the renderer event.
+    global.__vexaNativeFullscreen = window.isFullScreen();
+    window.on("enter-full-screen", () => { global.__vexaNativeFullscreen = true; });
+    window.on("leave-full-screen", () => { global.__vexaNativeFullscreen = false; });
+  });
   page.on("pageerror", (error) => results.errors.push(error.message));
   page.on("request", (request) => {
     if (/^https?:/.test(request.url()))
@@ -367,7 +381,7 @@ async function exercisePlaybackControls() {
         el.querySelector(".wall-toolbar").contains(document.activeElement),
     ),
   );
-  await page.evaluate(() => document.exitFullscreen());
+  await exitFullscreen();
   await page.waitForTimeout(650);
   await page.getByRole("button", { name: "统一播放设置", exact: true }).click();
   await page.waitForTimeout(650);
@@ -429,6 +443,9 @@ async function exerciseWallEditing(fixtures) {
   await until(async () => await videos.count() === 4);
   check("drawer adds a video without stopping the existing player",
     await original.evaluate(video => video.isConnected && !video.paused && video.currentTime > 0));
+  // A mounted video element can precede metadata delivery, especially on macOS.
+  await until(async () => await videos.last().evaluate(video =>
+    video.readyState >= 2 && Number.isFinite(video.duration) && video.duration > 0));
   const endingSource = await videos.last().getAttribute("src");
   await videos.last().evaluate(video => { video.currentTime = video.duration - 0.05; });
   await until(async () => await videos.last().evaluate(video => video.ended && video.paused));
@@ -487,7 +504,7 @@ async function exerciseWallEditing(fixtures) {
     await page.getByRole("button", { name: "播放中添加视频", exact: true }).evaluate(el => el === document.activeElement));
   await page.getByRole("button", { name: "播放全部", exact: true }).click();
   await page.getByRole("button", { name: "全屏播放墙", exact: true }).click();
-  await page.waitForFunction(() => !!document.fullscreenElement);
+  await waitForFullscreen(true);
   await page.getByRole("button", { name: "播放中添加视频", exact: true }).click();
   await drawer.waitFor();
   await page.waitForTimeout(3100);
@@ -503,7 +520,7 @@ async function exerciseWallEditing(fixtures) {
   await until(async () => await videos.count() === 3);
   check("fullscreen add and remove preserve unrelated playback",
     await original.evaluate(video => video.isConnected && !video.paused));
-  await page.evaluate(() => document.exitFullscreen());
+  await exitFullscreen();
   await page.getByRole("button", { name: "播放中添加视频", exact: true }).click();
   await app.evaluate(({ dialog }, file) => {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [file] });
@@ -964,7 +981,7 @@ async function main() {
   );
   await page.getByRole("button", { name: "全局静音", exact: true }).click();
   await page.getByRole("button", { name: "全屏播放墙", exact: true }).click();
-  await page.waitForFunction(() => !!document.fullscreenElement);
+  await waitForFullscreen(true);
   check(
     "fullscreen fills the available wall",
     await page
@@ -1135,7 +1152,7 @@ async function main() {
     });
     if (count === 16) {
       await page.getByRole("button", { name: "全屏播放墙", exact: true }).click();
-      await page.waitForFunction(() => !!document.fullscreenElement);
+      await waitForFullscreen(true);
       const withNotice = await page.locator(".video-wall").boundingBox();
       await page.getByRole("button", { name: "暂停非主画面", exact: true }).click();
       await page.locator(".performance-notice").waitFor({ state: "detached" });
@@ -1144,7 +1161,7 @@ async function main() {
         Math.abs(withNotice.height - withoutNotice.height) < 1 &&
         Math.abs(withNotice.width - withoutNotice.width) < 1);
       await page.getByRole("button", { name: "恢复暂停画面", exact: true }).click();
-      await page.evaluate(() => document.exitFullscreen());
+      await exitFullscreen();
     }
   }
   await page.locator(".subtle-button").click();

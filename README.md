@@ -2,9 +2,17 @@
 
 一个本地多视频播放器，本地导入与播放完全离线可用。当前版本为 **0.3.1 开发版**：从本地文件/文件夹导入，建立 SQLite 视频库，创建最多 32 个画面的播放墙；另提供用户主动使用的 X 链接下载功能。
 
-**下载安装：[Windows x64 安装包（v0.3.1）](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/Vexa-Player-0.3.1-Windows-x64.exe)** · [发布页与校验文件](https://github.com/lengziyu/vexa-player/releases/tag/v0.3.1)
+## 下载安装
 
-下载 `.exe` 后运行安装即可。当前提供 Windows 64 位开发版；macOS 安装包尚未发布。
+| 系统 / 芯片 | 安装包（v0.3.1） | 说明 |
+| --- | --- | --- |
+| Windows 64 位（x64） | [下载 Windows 安装包](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/Vexa-Player-0.3.1-Windows-x64.exe) | 下载 `.exe` 后运行安装 |
+| macOS · Apple M 系列（Apple Silicon / arm64） | [下载 Mac M 芯片安装包](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/Vexa-Player-0.3.1-macOS-arm64.dmg) | macOS 13.0+，约 128 MiB；打开 `.dmg` 后将应用拖入 Applications |
+| macOS · Intel（x64） | 暂未发布 | 需要单独的 Intel 安装包，不能使用上面的 arm64 包 |
+
+**Mac 怎么选？** 打开苹果菜单 →「关于本机」，显示「芯片：Apple M…」就选 M 芯片版；显示 Intel 处理器则属于 Intel Mac。M 系列的不同代际使用同一个 arm64 包，无需分别下载。
+
+[发布页与校验文件](https://github.com/lengziyu/vexa-player/releases/tag/v0.3.1)。当前 macOS 包使用 ad-hoc 签名，未经过 Apple 公证，首次打开互联网下载可能需要 macOS 安全批准。macOS 的独立检查结果见[自测说明](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/macOS-arm64-SELF_TEST.txt)与[完整记录](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/macOS-arm64-test-summary.json)。
 
 当前 Windows 安装包约 **127 MiB**，比 v0.2.0 缩小约 **20.4%**，安装后占用减少约 90 MiB，保留离线导入、封面生成和播放能力。体积对比与检查记录见[自测报告](docs/SELF_TEST.md)。
 
@@ -180,6 +188,8 @@ npm run test:package
 `test:downloads` 为显式联网测试：在独立临时目录安装官方组件，解析公开 X 样本并下载、入库和播放；不会访问用户视频库，测试结束清理样本。输出 `test-results/downloads-results.json`。设置 `VEXA_TEST_EXECUTABLE` 可复测安装包内的实际程序；打包结果见[自测报告](docs/SELF_TEST.md)。
 
 Windows 安装包输出到 `release/<版本号>/`。macOS 应在对应架构的 Mac 或 CI 中独立安装依赖后执行 `npm run dist:mac`；Intel 与 Apple Silicon 分别构建、运行并验证 FFmpeg/FFprobe 的架构，不能直接复用 Windows 的 node_modules。签名与公证需要发布者自己的凭据。
+
+Apple Silicon 本地测试包可运行 `npm run dist:mac -- --arm64 --publish never --config.mac.identity=-`；这会使用 ad-hoc 签名，不代表已通过 Apple 公证。随后运行 `npm run test:package:mac`，检查 DMG 完整性、挂载复制、嵌套签名、版本、中文资源、许可证及媒体工具架构。检查会把 DMG 内的应用复制到独立的 `.cache/mac-package-audit/` 目录，在 `test-results/package-mac-results.json` 中记录 `installedExecutable`；将其设为 `VEXA_TEST_EXECUTABLE` 即可针对安装包内的实际程序运行桌面、容量、登录、下载与编码测试。
 
 ## 支持边界
 

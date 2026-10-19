@@ -19,6 +19,7 @@
     "test:x-auth": "npm run build && node scripts/x-auth-smoke.cjs",
     "test:capacity": "npm run build && node scripts/capacity-smoke.cjs",
     "test:package": "node scripts/check-package.cjs",
+    "test:package:mac": "node scripts/check-package-mac.cjs",
     "build": "npm run typecheck && electron-vite build",
     "pack": "npm run build && node scripts/package.cjs --dir",
     "dist:win": "npm run build && node scripts/package.cjs --win nsis --x64",
@@ -81,6 +82,11 @@
     },
     "mac": {
       "target": "dmg",
+      "electronLanguages": ["en", "zh_CN"],
+      "extraResources": [
+        { "from": "node_modules/electron/dist/LICENSE", "to": "LICENSE.electron.txt" },
+        { "from": "node_modules/electron/dist/LICENSES.chromium.html", "to": "LICENSES.chromium.html" }
+      ],
       "category": "public.app-category.video",
       "artifactName": "Vexa-Player-${version}-macOS-${arch}.${ext}"
     }

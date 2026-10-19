@@ -2,6 +2,8 @@ const { spawnSync } = require("node:child_process");
 const { dirname, join, resolve } = require("node:path");
 
 const project = resolve(__dirname, "..");
+// Electron downloads lazily; macOS packaging copies its upstream license files.
+if (process.platform === "darwin") require("electron");
 const builderRoot = dirname(require.resolve("electron-builder/package.json"));
 const result = spawnSync(
   process.execPath,
