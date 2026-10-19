@@ -133,17 +133,14 @@ onMounted(() => {
   </div>
   <div class="setting-row">
     <div>
-      <strong>多画面声音混合</strong>
-      <p>默认只让焦点画面发声</p>
+      <strong>全部画面同时发声</strong>
+      <p>开启后混合播放声音，保留单独静音与音量</p>
     </div>
     <button
       class="toggle"
       :aria-pressed="wall.mixedAudio"
       aria-label="多画面混音"
-      @click="
-        wall.mixedAudio = !wall.mixedAudio;
-        wall.sync();
-      "
+      @click="wall.setMixedAudio(!wall.mixedAudio)"
     ></button>
   </div>
   <div class="setting-row">
@@ -161,7 +158,7 @@ onMounted(() => {
   <div class="setting-row">
     <div>
       <strong>播放结束后自动换片</strong>
-      <p>锁定或循环的画面不受影响</p>
+      <p>默认关闭；开启后适用于全部布局，锁定或循环画面除外</p>
     </div>
     <button
       class="toggle"
@@ -172,7 +169,7 @@ onMounted(() => {
   </div>
   <div class="setting-row">
     <div>
-      <strong>定时邂逅下一幕</strong>
+      <strong>定时自动换片</strong>
       <p>只累计播放时间，暂停时停止计时</p>
     </div>
     <SelectMenu

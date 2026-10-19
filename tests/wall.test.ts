@@ -49,6 +49,74 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 describe("playback resource controls", () => {
+  it("keeps the current video after ending by default and only changes it after opting in", () => {
+    const w = useWall(), s = useSettings();
+    expect(s.values.autoNext).toBe(false);
+    expect(s.values.switchInterval).toBe(0);
+    w.newWall([media("a")]);
+    w.randomPool = [media("b")];
+    w.ended(w.tiles[0]!.id);
+    expect(w.tiles[0]).toMatchObject({ media: { id: media("a").id }, paused: true, status: "ended" });
+    s.values.autoNext = true;
+    w.newWall([media("a")]);
+    w.ended(w.tiles[0]!.id);
+    expect(w.tiles[0]!.media.id).toBe(media("b").id);
+  });
+  it("undoes a removal at the original position and progress without changing other tiles", () => {
+    const w = useWall();
+    w.newWall([media("a"), media("b"), media("c")]);
+    const first = w.tiles[0]!, other = w.tiles[1]!, otherEngine = engine();
+    w.register(other.id, otherEngine);
+    first.progress = 17;
+    first.volume = 0.4;
+    first.muted = true;
+    first.speed = 3;
+    first.locked = true;
+    other.progress = 9;
+    w.remove(first.id, true);
+    expect(w.tiles.map(t => t.media.id)).toEqual([media("b").id, media("c").id]);
+    expect(w.restoreRemoved()).toBeNull();
+    expect(w.tiles[0]).toMatchObject({ id: first.id, startAt: 17, progress: 17, volume: 0.4, muted: true, speed: 3, locked: true });
+    expect(w.tiles[1]).toBe(other);
+    expect(other.progress).toBe(9);
+    expect(otherEngine.seek).not.toHaveBeenCalled();
+    expect(otherEngine.play).toHaveBeenCalledTimes(1);
+    expect(w.removed).toBeNull();
+  });
+  it("undo respects a later global pause and privacy hide", () => {
+    const w = useWall();
+    w.newWall([media("a"), media("b")]);
+    const first = w.tiles[0]!;
+    w.remove(first.id, true);
+    w.toggleAll(false);
+    w.restoreRemoved();
+    expect(w.tiles.every(t => t.paused)).toBe(true);
+    w.remove(first.id, true);
+    w.hide();
+    w.restoreRemoved();
+    expect(w.tiles.every(t => t.paused)).toBe(true);
+    const e = engine();
+    w.register(first.id, e);
+    expect(e.configure).toHaveBeenLastCalledWith(expect.objectContaining({ muted: true }));
+  });
+  it("expires undo, respects capacity and clears it when creating a new wall", () => {
+    vi.useFakeTimers();
+    try {
+      const w = useWall();
+      const pool = Array.from({ length: 33 }, (_, i) => ({ ...media("a"), id: i.toString(16).padStart(32, "0") }));
+      w.newWall(pool.slice(0, 32));
+      w.remove(w.tiles[0]!.id, true);
+      w.add(pool[32]!);
+      expect(w.restoreRemoved()).toContain("已满");
+      expect(w.tiles).toHaveLength(32);
+      vi.advanceTimersByTime(8000);
+      expect(w.removed).toBeNull();
+      w.remove(w.tiles[0]!.id, true);
+      w.newWall([media("b")]);
+      expect(w.removed).toBeNull();
+      expect(w.restoreRemoved()).toContain("过期");
+    } finally { vi.useRealTimers(); }
+  });
   it("accepts 32 tiles and refuses overflow without changing the existing wall", () => {
     const w = useWall();
     const pool = Array.from({ length: 33 }, (_, i) => ({
@@ -178,6 +246,78 @@ describe("playback resource controls", () => {
       expect.objectContaining({ muted: true }),
     );
     expect(w.tiles.every((t) => t.paused)).toBe(true);
+  });
+  it("mixes all players independently of focus and restores focus-only routing", () => {
+    const w = useWall();
+    w.newWall([media("a"), media("b")]);
+    const first = engine(),
+      second = engine();
+    w.register(w.tiles[0]!.id, first);
+    w.register(w.tiles[1]!.id, second);
+    w.setVolume(0.4);
+    w.tiles[0]!.volume = 0.5;
+    w.toggle(w.tiles[1]!.id);
+    w.setMixedAudio(true);
+    expect(first.configure).toHaveBeenLastCalledWith(
+      expect.objectContaining({ muted: false, volume: 0.2 }),
+    );
+    expect(second.configure).toHaveBeenLastCalledWith(
+      expect.objectContaining({ muted: false, volume: 0.4 }),
+    );
+    expect(w.tiles[1]!.paused).toBe(true);
+    w.focus(w.tiles[1]!.id);
+    expect(first.configure).toHaveBeenLastCalledWith(
+      expect.objectContaining({ muted: false }),
+    );
+    w.add(media("c"));
+    const third = engine();
+    w.register(w.tiles[2]!.id, third);
+    expect(third.configure).toHaveBeenLastCalledWith(
+      expect.objectContaining({ muted: false }),
+    );
+    w.setMixedAudio(false);
+    expect(first.configure).toHaveBeenLastCalledWith(
+      expect.objectContaining({ muted: true }),
+    );
+    expect(second.configure).toHaveBeenLastCalledWith(
+      expect.objectContaining({ muted: false }),
+    );
+    expect(third.configure).toHaveBeenLastCalledWith(
+      expect.objectContaining({ muted: true }),
+    );
+    expect(w.tiles[1]!.paused).toBe(true);
+  });
+  it("keeps individual, global and privacy muting effective in mixed audio mode", () => {
+    const w = useWall();
+    w.newWall([media("a"), media("b")]);
+    const first = engine(),
+      second = engine();
+    w.register(w.tiles[0]!.id, first);
+    w.register(w.tiles[1]!.id, second);
+    w.setVolume(0.6);
+    w.tiles[1]!.muted = true;
+    w.setMixedAudio(true);
+    expect(first.configure).toHaveBeenLastCalledWith(
+      expect.objectContaining({ muted: false }),
+    );
+    expect(second.configure).toHaveBeenLastCalledWith(
+      expect.objectContaining({ muted: true }),
+    );
+    w.muted = true;
+    w.sync();
+    expect(first.configure).toHaveBeenLastCalledWith(
+      expect.objectContaining({ muted: true }),
+    );
+    w.hide();
+    w.setVolume(0.6);
+    w.setMixedAudio(false);
+    w.setMixedAudio(true);
+    for (const e of [first, second]) {
+      expect(e.configure).toHaveBeenLastCalledWith(
+        expect.objectContaining({ muted: true }),
+      );
+      expect(e.element.paused).toBe(true);
+    }
   });
   it("does not downgrade an already playing stream when play-all is requested", () => {
     const w = useWall();

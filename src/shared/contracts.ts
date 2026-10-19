@@ -32,7 +32,7 @@ export const defaultSettings: Settings = {
   layout: "focus",
   fit: "contain",
   randomStart: false,
-  autoNext: true,
+  autoNext: false,
   switchInterval: 0,
   locale: "zh-CN",
   thumbnailSize: "medium",

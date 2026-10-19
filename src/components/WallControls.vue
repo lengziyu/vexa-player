@@ -172,7 +172,27 @@ onBeforeUnmount(() => {
         </div>
         <div class="wall-control-row">
           <div class="wall-control-label">
-            <label for="wall-unified-volume">统一音量</label>
+            <div>
+              <label for="wall-unified-volume">统一音量</label>
+              <div class="audio-routing" role="group" aria-label="发声范围">
+                <button
+                  :aria-pressed="!wall.mixedAudio"
+                  aria-label="仅选中画面发声"
+                  title="仅选中画面发声"
+                  @click="wall.setMixedAudio(false)"
+                >
+                  仅选中
+                </button>
+                <button
+                  :aria-pressed="wall.mixedAudio"
+                  aria-label="全部画面同时发声"
+                  title="全部画面同时发声，保留单独静音"
+                  @click="wall.setMixedAudio(true)"
+                >
+                  全部声音
+                </button>
+              </div>
+            </div>
             <div>
               <button
                 class="unified-mute"
@@ -225,7 +245,13 @@ onBeforeUnmount(() => {
             </button>
           </div>
         </div>
-        <p>进度按各自时长同步跳转，默认仅焦点画面发声。</p>
+        <p>
+          进度按各自时长跳转。{{
+            wall.mixedAudio
+              ? "全部画面发声，保留单独静音。"
+              : "仅选中画面发声。"
+          }}
+        </p>
       </section></Transition
     >
   </div>

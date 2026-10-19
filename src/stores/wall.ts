@@ -1,5 +1,5 @@
 import { defineStore } from "pinia";
-import { computed, ref, watch } from "vue";
+import { computed, onScopeDispose, ref, watch } from "vue";
 import type { MediaItem, TileState } from "../shared/contracts";
 import { MAX_WALL_TILES, PLAYBACK_SPEEDS } from "../shared/contracts";
 import type { PlayerEngine } from "../player/engine";
@@ -39,6 +39,14 @@ export const useWall = defineStore("wall", () => {
   );
   const pausedByAll = ref(false),
     randomPool = ref<MediaItem[]>([]);
+  const removed = ref<{ tile: TileState; index: number; paused: boolean } | null>(null);
+  let removalTimer: ReturnType<typeof setTimeout> | undefined;
+  function dismissRemoval(): void {
+    clearTimeout(removalTimer);
+    removalTimer = undefined;
+    removed.value = null;
+  }
+  onScopeDispose(dismissRemoval);
   let count = 0;
   function create(media: MediaItem, paused = false): TileState {
     const id = `tile-${++count}`;
@@ -162,6 +170,7 @@ export const useWall = defineStore("wall", () => {
   function newWall(media: MediaItem[]): void {
     if (media.length > MAX_WALL_TILES)
       throw new Error(`最多同时播放 ${MAX_WALL_TILES} 个画面，请减少选择`);
+    dismissRemoval();
     manualPaused.clear();
     quality.value = {};
     pendingPlay.clear();
@@ -172,17 +181,37 @@ export const useWall = defineStore("wall", () => {
     pausedByAll.value = false;
     recent.splice(0);
   }
-  function remove(id: string): void {
+  function remove(id: string, undoable = false): void {
+    const index = tiles.value.findIndex((t) => t.id === id);
+    const tile = tiles.value[index];
+    if (!tile) return;
+    if (undoable) {
+      dismissRemoval();
+      removed.value = { tile: { ...tile }, index, paused: !!manualPaused.get(id) };
+      removalTimer = setTimeout(dismissRemoval, 8000);
+    }
     manualPaused.delete(id);
     pendingPlay.delete(id);
     delete quality.value[id];
-    const index = tiles.value.findIndex((t) => t.id === id);
     tiles.value = tiles.value.filter((t) => t.id !== id);
     if (focused.value === id)
       focused.value =
         tiles.value[Math.min(index, tiles.value.length - 1)]?.id ?? null;
     if (zoomed.value === id) zoomed.value = null;
     sync();
+  }
+  function restoreRemoved(): string | null {
+    const entry = removed.value;
+    if (!entry) return "撤销已过期";
+    if (tiles.value.length >= MAX_WALL_TILES)
+      return `播放墙已满，最多 ${MAX_WALL_TILES} 个画面`;
+    const tile = { ...entry.tile, startAt: entry.tile.progress };
+    manualPaused.set(tile.id, entry.paused || pausedByAll.value || privacy.value);
+    tiles.value.splice(Math.min(entry.index, tiles.value.length), 0, tile);
+    focused.value ??= tile.id;
+    dismissRemoval();
+    sync();
+    return null;
   }
   function toggleAll(force?: boolean): void {
     const next = force ?? !playing.value;
@@ -325,6 +354,10 @@ export const useWall = defineStore("wall", () => {
     for (const tile of tiles.value) tile.speed = value;
     sync();
   }
+  function setMixedAudio(value: boolean): void {
+    mixedAudio.value = value;
+    sync();
+  }
   function focus(id: string): void {
     focused.value = id;
     sync();
@@ -422,6 +455,8 @@ export const useWall = defineStore("wall", () => {
     add,
     newWall,
     remove,
+    removed,
+    restoreRemoved,
     toggleAll,
     toggle,
     replace,
@@ -432,6 +467,7 @@ export const useWall = defineStore("wall", () => {
     seekPercent,
     setVolume,
     setSpeed,
+    setMixedAudio,
     focus,
     main,
     swap,

@@ -17,7 +17,9 @@ const ffmpeg = require("ffmpeg-static");
 const initSqlJs = require("sql.js");
 const { createHash } = require("node:crypto");
 const project = resolve(__dirname, "..");
-const screenshots = join(project, "docs", "screenshots");
+const screenshots = resolve(
+  process.env.VEXA_TEST_SCREENSHOTS || join(project, "docs", "screenshots"),
+);
 const output = join(project, "test-results");
 const results = {
   checks: [],
@@ -65,6 +67,11 @@ async function launch(dataDir) {
       results.errors.push(text);
   });
   page = await app.firstWindow();
+  // CDP input still reaches the renderer; physical mouse movement on the shared
+  // desktop must not reset the inactivity timer during this automated run.
+  await app.evaluate(({ BrowserWindow }) =>
+    BrowserWindow.getAllWindows()[0].setIgnoreMouseEvents(true),
+  );
   page.on("pageerror", (error) => results.errors.push(error.message));
   page.on("request", (request) => {
     if (/^https?:/.test(request.url()))
@@ -265,6 +272,37 @@ async function exercisePlaybackControls() {
       ),
   );
   await popup
+    .getByRole("button", { name: "全部画面同时发声", exact: true })
+    .click();
+  await until(async () => page.locator(".video-tile video").evaluateAll(
+    (videos) => videos.every((video) => !video.muted),
+  ));
+  check("all-audio mode unmutes every real player", true);
+  await page.screenshot({
+    path: join(screenshots, "all-audio-controls.png"),
+    animations: "disabled",
+  });
+  await popup.getByRole("button", { name: "统一静音", exact: true }).click();
+  check(
+    "global mute still silences every player in all-audio mode",
+    await page.locator(".video-tile video").evaluateAll(
+      (videos) => videos.every((video) => video.muted),
+    ),
+  );
+  await popup.getByRole("button", { name: "取消统一静音", exact: true }).click();
+  await until(async () => page.locator(".video-tile video").evaluateAll(
+    (videos) => videos.every((video) => !video.muted),
+  ));
+  await popup
+    .getByRole("button", { name: "仅选中画面发声", exact: true })
+    .click();
+  check(
+    "focus-only mode restores a single audible player",
+    await page.locator(".video-tile video").evaluateAll(
+      (videos) => videos.filter((video) => !video.muted).length === 1,
+    ),
+  );
+  await popup
     .getByRole("button", { name: "全部 1.5 倍速", exact: true })
     .click();
   check(
@@ -365,6 +403,123 @@ async function exercisePlaybackControls() {
     await page.getByRole("button", { name: "全部暂停", exact: true }).click();
   await page.getByRole("button", { name: "播放全部", exact: true }).click();
 }
+async function exerciseWallEditing(fixtures) {
+  const videos = page.locator(".video-tile video");
+  await page.locator('[aria-label="全局百分比跳转"]').evaluate((el) => {
+    el.value = "0";
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  const play = page.getByRole("button", { name: "播放全部", exact: true });
+  if (await play.count()) await play.click();
+  const original = await videos.first().elementHandle();
+  const replacement = await videos.nth(1).elementHandle();
+  const originalSource = await original.getAttribute("src");
+  const wallSize = await page.locator(".video-wall").boundingBox();
+  await page.getByRole("button", { name: "播放中添加视频", exact: true }).click();
+  const drawer = page.getByRole("region", { name: "播放墙选片", exact: true });
+  await drawer.waitFor();
+  const unchangedSize = await page.locator(".video-wall").boundingBox();
+  check("selection drawer leaves the wall size and player instances unchanged",
+    Math.abs(wallSize.width - unchangedSize.width) < 1 &&
+    Math.abs(wallSize.height - unchangedSize.height) < 1 &&
+    await page.locator(".modal-backdrop").count() === 0 &&
+    await original.evaluate(video => video.isConnected));
+  await drawer.getByRole("searchbox", { name: "选片搜索", exact: true }).fill("04-coast.mp4");
+  await drawer.getByRole("button", { name: "添加 04-coast.mp4", exact: true }).click();
+  await until(async () => await videos.count() === 4);
+  check("drawer adds a video without stopping the existing player",
+    await original.evaluate(video => video.isConnected && !video.paused && video.currentTime > 0));
+  const endingSource = await videos.last().getAttribute("src");
+  await videos.last().evaluate(video => { video.currentTime = video.duration - 0.05; });
+  await until(async () => await videos.last().evaluate(video => video.ended && video.paused));
+  check("default playback ends without replacing the selected video",
+    await videos.last().getAttribute("src") === endingSource);
+  await drawer.getByRole("button", { name: "关闭选片侧栏", exact: true }).click();
+  await drawer.waitFor({ state: "detached" });
+  await page.locator(".video-tile").last().hover();
+  await page.locator(".video-tile").last().getByRole("button", { name: "播放此画面", exact: true }).click();
+  await page.getByRole("button", { name: "播放中添加视频", exact: true }).click();
+  await drawer.waitFor();
+  await page.locator(".video-tile").last().locator(".tile-progress").evaluate(el => {
+    el.value = "28";
+    el.dispatchEvent(new Event("input", { bubbles: true }));
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  await until(async () => await videos.last().evaluate(video => video.currentTime >= 7));
+  await drawer.getByRole("button", { name: /^正在播放/ }).click();
+  await drawer.getByRole("button", { name: "移出第 4 个画面", exact: true }).click();
+  await until(async () => await videos.count() === 3);
+  await page.getByRole("button", { name: "撤销移出画面", exact: true }).click();
+  await until(async () => await videos.count() === 4 && await videos.last().evaluate(video => video.readyState >= 2));
+  check("removal can be undone without recreating unaffected players",
+    await original.evaluate(video => video.isConnected && !video.paused) &&
+    await videos.last().evaluate(video => video.currentTime >= 6.8 && video.currentTime < 10));
+  await drawer.getByRole("button", { name: "移出第 4 个画面", exact: true }).click();
+  await until(async () => await videos.count() === 3);
+  await drawer.getByRole("button", { name: "替换第 2 个画面", exact: true }).click();
+  const positions = () => page.locator(".video-tile").evaluateAll(tiles =>
+    tiles.map(tile => [tile.style.left, tile.style.top, tile.style.width, tile.style.height]));
+  const beforePositions = await positions();
+  const beforeReplacement = await replacement.getAttribute("src");
+  await drawer.getByRole("button", { name: "替换为 04-coast.mp4", exact: true }).click();
+  await until(async () => await replacement.getAttribute("src") !== beforeReplacement &&
+    await replacement.evaluate(video => video.readyState >= 2));
+  check("targeted replacement preserves the other video and the target element",
+    await original.evaluate(video => video.isConnected && !video.paused) &&
+    await original.getAttribute("src") === originalSource &&
+    await replacement.evaluate(video => video.isConnected));
+  check("replacement keeps every existing slot fixed",
+    JSON.stringify(await positions()) === JSON.stringify(beforePositions));
+  const beforeReflowTime = await original.evaluate(video => video.currentTime);
+  await page.getByRole("button", { name: "重新排布画面", exact: true }).click();
+  check("manual reflow keeps playback and video elements alive",
+    await original.evaluate((video, time) => video.isConnected && !video.paused && video.currentTime >= time - 0.1, beforeReflowTime));
+  await page.locator(".wall-panel").screenshot({ path: join(screenshots, "wall-media-drawer.png"), animations: "disabled" });
+  await page.getByRole("button", { name: "全部暂停", exact: true }).click();
+  await drawer.getByRole("searchbox", { name: "选片搜索", exact: true }).fill("05-video.mp4");
+  const beforePausedReplacement = await replacement.getAttribute("src");
+  await drawer.getByRole("button", { name: "替换为 05-video.mp4", exact: true }).click();
+  await until(async () => await replacement.getAttribute("src") !== beforePausedReplacement && await replacement.evaluate(video => video.readyState >= 2));
+  check("replacement preserves global pause", await videos.evaluateAll(list => list.every(video => video.paused)));
+  await drawer.getByRole("searchbox", { name: "选片搜索", exact: true }).press("Escape");
+  await drawer.waitFor({ state: "detached" });
+  check("Escape closes the drawer and restores its trigger focus",
+    await page.getByRole("button", { name: "播放中添加视频", exact: true }).evaluate(el => el === document.activeElement));
+  await page.getByRole("button", { name: "播放全部", exact: true }).click();
+  await page.getByRole("button", { name: "全屏播放墙", exact: true }).click();
+  await page.waitForFunction(() => !!document.fullscreenElement);
+  await page.getByRole("button", { name: "播放中添加视频", exact: true }).click();
+  await drawer.waitFor();
+  await page.waitForTimeout(3100);
+  check("fullscreen drawer stays inside the wall and keeps controls visible",
+    await drawer.evaluate(el => document.fullscreenElement.contains(el)) &&
+    !await page.locator(".wall-panel").evaluate(el => el.classList.contains("controls-idle")));
+  await drawer.getByRole("searchbox", { name: "选片搜索", exact: true }).fill("06-video.mp4");
+  await drawer.getByRole("button", { name: "添加 06-video.mp4", exact: true }).click();
+  await until(async () => await videos.count() === 4);
+  await drawer.getByRole("button", { name: "关闭选片侧栏", exact: true }).click();
+  await videos.last().locator("..").hover();
+  await page.locator(".video-tile").last().getByRole("button", { name: "关闭画面", exact: true }).click();
+  await until(async () => await videos.count() === 3);
+  check("fullscreen add and remove preserve unrelated playback",
+    await original.evaluate(video => video.isConnected && !video.paused));
+  await page.evaluate(() => document.exitFullscreen());
+  await page.getByRole("button", { name: "播放中添加视频", exact: true }).click();
+  await app.evaluate(({ dialog }, file) => {
+    dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [file] });
+  }, join(fixtures, "01-alpine.mp4"));
+  await drawer.getByRole("button", { name: "播放中导入视频", exact: true }).click();
+  await page.waitForTimeout(700);
+  check("import from the drawer keeps the wall and drawer open",
+    await drawer.isVisible() && await original.evaluate(video => video.isConnected) &&
+    await page.locator(".library-view").isHidden());
+  await drawer.getByRole("button", { name: "关闭选片侧栏", exact: true }).click();
+  await page.locator('[aria-label="全局百分比跳转"]').evaluate((el) => {
+    el.value = "0";
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+  if (await play.count()) await play.click();
+}
 async function main() {
   temporary = await mkdtemp(join(tmpdir(), "vexa-desktop-test-"));
   const fixtures = join(output, "fixtures", "测试视频 with spaces"),
@@ -432,6 +587,9 @@ async function main() {
   );
   await writeFile(join(fixtures, "notes.txt"), "not media");
   await launch(dataDir);
+  const freshDefaults = await page.evaluate(() => window.vexa.getSettings());
+  check("fresh preferences disable both automatic replacement modes",
+    freshDefaults.autoNext === false && freshDefaults.switchInterval === 0);
   check(
     "sandboxed renderer",
     await page.evaluate(
@@ -840,6 +998,7 @@ async function main() {
   });
   await speedControl.press("Escape");
   await exercisePlaybackControls();
+  await exerciseWallEditing(fixtures);
   const leftBefore = await page
     .locator(".video-tile")
     .first()
@@ -900,9 +1059,8 @@ async function main() {
   );
   await page.getByRole("button", { name: "偏好设置", exact: true }).click();
   await page.getByRole("button", { name: "深色", exact: true }).click();
-  await page
-    .getByRole("button", { name: "结束后自动换片", exact: true })
-    .click();
+  const autoNext = page.getByRole("button", { name: "结束后自动换片", exact: true });
+  if (await autoNext.getAttribute("aria-pressed") === "true") await autoNext.click();
   await page.getByRole("button", { name: "关闭弹窗" }).click();
   for (const count of [4, 9, 16]) {
     await page.locator(".subtle-button").click();
@@ -975,6 +1133,19 @@ async function main() {
       syntheticLowComplexity: true,
       stats,
     });
+    if (count === 16) {
+      await page.getByRole("button", { name: "全屏播放墙", exact: true }).click();
+      await page.waitForFunction(() => !!document.fullscreenElement);
+      const withNotice = await page.locator(".video-wall").boundingBox();
+      await page.getByRole("button", { name: "暂停非主画面", exact: true }).click();
+      await page.locator(".performance-notice").waitFor({ state: "detached" });
+      const withoutNotice = await page.locator(".video-wall").boundingBox();
+      check("fullscreen resource notice does not resize the playback wall",
+        Math.abs(withNotice.height - withoutNotice.height) < 1 &&
+        Math.abs(withNotice.width - withoutNotice.width) < 1);
+      await page.getByRole("button", { name: "恢复暂停画面", exact: true }).click();
+      await page.evaluate(() => document.exitFullscreen());
+    }
   }
   await page.locator(".subtle-button").click();
   await page
@@ -1170,6 +1341,16 @@ async function main() {
       "1500",
   );
   check("portrait 1080p uses short edge resolution with status filter", true);
+  await page.getByRole("button", { name: "全选当前列表", exact: true }).click();
+  await until(async () =>
+    (await page.locator(".selection-bar strong").textContent()) === "1500",
+  );
+  check("visible select-all action selects every filtered page", true);
+  await page.getByRole("button", { name: "取消选择", exact: true }).click();
+  check(
+    "cancel clears the complete filtered selection",
+    await page.locator(".selection-bar").count() === 0,
+  );
   await page.locator(".filter-reset").click();
   await until(
     async () =>
@@ -1205,6 +1386,25 @@ async function main() {
     ),
   );
   await page.getByRole("button", { name: "刷新文件夹", exact: true }).count();
+  await page.locator(".main-nav").getByRole("button", { name: /播放墙/ }).click();
+  await page.getByRole("button", { name: "播放中添加视频", exact: true }).click();
+  const libraryDrawer = page.getByRole("region", { name: "播放墙选片", exact: true });
+  await libraryDrawer.getByRole("searchbox", { name: "选片搜索", exact: true }).fill("bulk-");
+  await until(async () => await libraryDrawer.locator(".picker-item").count() === 40);
+  await libraryDrawer.getByRole("button", { name: "选片下一页", exact: true }).click();
+  await until(async () => await libraryDrawer.locator(".picker-info strong").first().textContent() === "bulk-00040.mp4");
+  check("drawer independently searches and pages a large library with bounded rows",
+    await libraryDrawer.locator(".picker-item").count() === 40 &&
+    await page.locator(".library-view").isHidden());
+  await libraryDrawer.getByRole("searchbox", { name: "选片搜索", exact: true }).press("Control+Shift+H");
+  await libraryDrawer.waitFor({ state: "detached" });
+  await app.evaluate(({ BrowserWindow }) => {
+    BrowserWindow.getAllWindows()[0].restore();
+    BrowserWindow.getAllWindows()[0].show();
+  });
+  await page.getByRole("button", { name: "回到放映室", exact: true }).click();
+  check("privacy shortcut inside the picker closes the drawer and hides safely",
+    await libraryDrawer.count() === 0);
   check(
     "no unexpected renderer errors",
     results.errors.length === 0,
@@ -1230,6 +1430,14 @@ main()
     results.success = false;
     results.failure = error.stack;
     console.error(error);
+    if (page && !page.isClosed())
+      results.failureState = await page.evaluate(() => ({
+        videos: [...document.querySelectorAll(".video-tile video")].map((video) => ({
+          currentTime: video.currentTime, paused: video.paused, ended: video.ended,
+        })),
+        focused: document.activeElement?.className,
+        idleTrace: window.__idleTrace,
+      })).catch(() => null);
     if (page && !page.isClosed())
       await page
         .screenshot({ path: join(output, "desktop-failure.png") })

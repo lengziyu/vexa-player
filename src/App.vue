@@ -14,6 +14,7 @@ import LibraryFilters from "./components/LibraryFilters.vue";
 import VirtualMediaGrid from "./components/VirtualMediaGrid.vue";
 import MediaCard from "./components/MediaCard.vue";
 import WallControls from "./components/WallControls.vue";
+import WallMediaDrawer from "./components/WallMediaDrawer.vue";
 import DownloadsPanel from "./components/DownloadsPanel.vue";
 import SelectMenu from "./components/SelectMenu.vue";
 import { useDownloads } from "./stores/downloads";
@@ -22,7 +23,7 @@ import { activeSelectMenu } from "./composables/useSelectMenu";
 import { useSettings } from "./stores/settings";
 import { useLibrary } from "./stores/library";
 import { useWall } from "./stores/wall";
-import { calculateLayout } from "./core/layout";
+import { createStableLayout } from "./core/layout";
 import type { MediaItem, LayoutMode } from "./shared/contracts";
 import {
   HIGH_WALL_TILE_COUNT,
@@ -51,6 +52,8 @@ const toastMessage = ref(""),
   scope = ref<"current" | "all">("current"),
   fullscreen = ref(false),
   wallControlsOpen = ref(false),
+  wallPickerOpen = ref(false),
+  pickerTarget = ref<string | null>(null),
   wallControlsHeight = ref(264),
   pointerHeld = ref(false),
   keyboardNavigation = ref(false),
@@ -64,6 +67,7 @@ let resizeObserver: ResizeObserver,
   toastTimer: ReturnType<typeof setTimeout>,
   searchTimer: ReturnType<typeof setTimeout>,
   lastFocus: HTMLElement | null = null;
+let pickerFocus: HTMLElement | null = null;
 const heading = computed(() =>
   view.value === "downloads"
     ? "留住喜欢的片刻"
@@ -86,8 +90,10 @@ const subtitle = computed(() =>
           ? "反复心动，也是一种浪漫。"
           : "每一次发现，都值得被好好收藏。",
 );
+const layoutRevision = ref(0),
+  planLayout = createStableLayout();
 const rects = computed(() =>
-  calculateLayout(
+  planLayout(
     wall.tiles.map((t) => ({
       id: t.id,
       aspect: (t.media.width || 16) / (t.media.height || 9),
@@ -95,6 +101,7 @@ const rects = computed(() =>
     dimensions.value.width,
     dimensions.value.height,
     settings.values.layout,
+    layoutRevision.value,
   ),
 );
 const mountedTiles = computed(() =>
@@ -108,6 +115,7 @@ const { idle: controlsIdle, wake: wakeControls } = useIdleControls(
     fullscreen.value && view.value === "wall" && wall.playing && !wall.privacy,
   () =>
     wallControlsOpen.value ||
+    wallPickerOpen.value ||
     countMenu.value ||
     !!activeSelectMenu.value ||
     !!modal.value ||
@@ -264,6 +272,45 @@ async function drop(event: DragEvent): Promise<void> {
 async function pool(): Promise<MediaItem[]> {
   return library.candidates(scope.value);
 }
+function openPicker(id: string | null = null): void {
+  if (!wallPickerOpen.value) pickerFocus = document.activeElement as HTMLElement;
+  pickerTarget.value = id;
+  wallPickerOpen.value = true;
+  wallControlsOpen.value = false;
+  countMenu.value = false;
+  wakeControls();
+}
+function closePicker(): void {
+  wallPickerOpen.value = false;
+  pickerTarget.value = null;
+  void nextTick(() => {
+    const target = pickerFocus?.isConnected
+      ? pickerFocus
+      : panelElement.value?.querySelector<HTMLButtonElement>(".wall-add-button");
+    target?.focus({ preventScroll: true });
+  });
+}
+function chooseForWall(media: MediaItem): void {
+  if (media.status === "missing" || media.status === "error") return;
+  if (pickerTarget.value) {
+    if (!wall.tiles.some((tile) => tile.id === pickerTarget.value)) return;
+    wall.replace(pickerTarget.value, media);
+  } else {
+    const message = wall.add(media);
+    if (message) return notify(message);
+  }
+  void pool().then((media) => { wall.randomPool = media; }).catch(error);
+}
+async function importDuringPlayback(): Promise<void> {
+  try {
+    const paths = await window.vexa?.pickFiles();
+    if (paths?.length) await library.importPaths(paths, recursive.value);
+  } catch (e) { error(e); }
+}
+function undoRemove(): void {
+  const message = wall.restoreRemoved();
+  if (message) notify(message);
+}
 async function shuffle(id?: string): Promise<void> {
   try {
     const count = wall.shuffle(await pool(), id);
@@ -347,6 +394,8 @@ async function toggleFullscreen(): Promise<void> {
 }
 async function privacyHide(): Promise<void> {
   closeModal();
+  wallPickerOpen.value = false;
+  pickerTarget.value = null;
   wall.hide();
   await nextTick();
   if (window.vexa) await window.vexa.privacyHide().catch(error);
@@ -448,6 +497,7 @@ function keyboard(event: KeyboardEvent): void {
   }
   if (event.key === "Escape") {
     if (modal.value) closeModal();
+    else if (wallPickerOpen.value) closePicker();
     else if (wallControlsOpen.value) wallControlsOpen.value = false;
     else if (countMenu.value) countMenu.value = false;
     else if (wall.zoomed) wall.zoomed = null;
@@ -531,6 +581,10 @@ watch(countMenu, (open) => {
 });
 watch([view, modal], () => {
   if (isLibrary.value || modal.value) wallControlsOpen.value = false;
+  if (modal.value || (view.value !== "wall" && view.value !== "home")) {
+    wallPickerOpen.value = false;
+    pickerTarget.value = null;
+  }
 });
 onMounted(async () => {
   try {
@@ -827,6 +881,14 @@ onBeforeUnmount(() => {
                 </button>
               </div>
               <div class="wall-toolbar-right">
+                <button
+                  class="wall-add-button"
+                  aria-label="播放中添加视频"
+                  :aria-expanded="wallPickerOpen"
+                  @click="openPicker()"
+                  @keydown.space.stop
+                  @keydown.enter.stop
+                ><Icon name="plus" :size="14" />添加视频</button>
                 <SelectMenu
                   v-model="scope"
                   label="随机来源"
@@ -884,6 +946,14 @@ onBeforeUnmount(() => {
                   }}
                 </button>
                 <span class="toolbar-divider"></span
+                ><button
+                  class="icon-button"
+                  :disabled="!wall.tiles.length"
+                  title="根据当前视频比例重新排布，播放继续"
+                  aria-label="重新排布画面"
+                  @click="layoutRevision++"
+                >
+                  <Icon name="refresh" /></button
                 ><button
                   class="icon-button"
                   title="切换完整显示与铺满"
@@ -950,6 +1020,7 @@ onBeforeUnmount(() => {
                 "
                 :style="tileStyle(tile.id)"
                 @shuffle="shuffle"
+                @replace="openPicker"
                 @info="showInfo"
                 @error="error"
               />
@@ -1009,6 +1080,15 @@ onBeforeUnmount(() => {
                   ? `${wall.tiles.length} 个画面，${wall.playing ? "正在放映" : "已暂停"}`
                   : "准备好，遇见下一幕"
               }}</span>
+              <button
+                v-if="wall.removed"
+                class="text-button wall-undo"
+                :title="`恢复 ${wall.removed.tile.media.name}，保留原进度`"
+                aria-label="撤销移出画面"
+                @click="undoRemove"
+                @keydown.space.stop
+                @keydown.enter.stop
+              ><Icon name="back" :size="12" />撤销移出</button>
               <div class="wall-hint-actions">
                 <span class="wall-hint-right"
                   >悬停画面，按
@@ -1024,6 +1104,18 @@ onBeforeUnmount(() => {
                 />
               </div>
             </div>
+            <Transition name="controls-popover">
+              <WallMediaDrawer
+                v-if="wallPickerOpen"
+                :target-id="pickerTarget"
+                :fullscreen="fullscreen"
+                :revision="library.revision"
+                @close="closePicker"
+                @choose="chooseForWall"
+                @replace="openPicker"
+                @import="importDuringPlayback"
+              />
+            </Transition>
           </section>
           <section class="global-player" aria-label="全局播放控制">
             <div class="player-context">
@@ -1202,29 +1294,42 @@ onBeforeUnmount(() => {
                 全部视频</button
               ><span>{{ library.total }} 个视频</span>
             </div>
-            <div class="sort-controls">
-              <SelectMenu
-                v-model="library.sort"
-                label="视频排序"
-                :options="
-                  [
-                    { value: 'name', label: '名称' },
-                    { value: 'duration', label: '时长' },
-                    { value: 'size', label: '文件大小' },
-                    { value: 'width', label: '分辨率' },
-                    { value: 'path', label: '路径' },
-                  ] as const
-                "
-              /><button
-                class="icon-button"
-                aria-label="切换排序方向"
-                @click="
-                  library.direction =
-                    library.direction === 'asc' ? 'desc' : 'asc'
-                "
+            <div class="library-actions">
+              <button
+                class="button secondary small"
+                :disabled="!library.total || library.loading || library.selecting"
+                :aria-busy="library.selecting"
+                aria-label="全选当前列表"
+                title="选择当前筛选结果中的全部视频（Ctrl+A）"
+                @click="selectAll"
               >
-                <Icon name="sliders" :size="15" />
+                <Icon :name="library.selecting ? 'loading' : 'check'" :size="14" />
+                {{ library.selecting ? "选择中…" : "全选" }}
               </button>
+              <div class="sort-controls">
+                <SelectMenu
+                  v-model="library.sort"
+                  label="视频排序"
+                  :options="
+                    [
+                      { value: 'name', label: '名称' },
+                      { value: 'duration', label: '时长' },
+                      { value: 'size', label: '文件大小' },
+                      { value: 'width', label: '分辨率' },
+                      { value: 'path', label: '路径' },
+                    ] as const
+                  "
+                /><button
+                  class="icon-button"
+                  aria-label="切换排序方向"
+                  @click="
+                    library.direction =
+                      library.direction === 'asc' ? 'desc' : 'asc'
+                  "
+                >
+                  <Icon name="sliders" :size="15" />
+                </button>
+              </div>
             </div>
           </div>
           <LibraryFilters @error="error" />

@@ -11,6 +11,36 @@ export interface Rect {
   height: number;
 }
 
+/** Keep slot geometry until the wall membership, viewport or chosen layout changes. */
+export function createStableLayout() {
+  let previousKey = "";
+  let slots: Rect[] = [];
+  return (
+    items: LayoutInput[],
+    width: number,
+    height: number,
+    mode: LayoutMode,
+    revision = 0,
+  ): Rect[] => {
+    if (!items.length) {
+      previousKey = "";
+      slots = [];
+      return [];
+    }
+    if (width <= 0 || height <= 0) return [];
+    const key = JSON.stringify([
+      width, height, mode, revision,
+      items.map(item => item.id).sort(),
+    ]);
+    if (key !== previousKey) {
+      slots = calculateLayout(items, width, height, mode);
+      previousKey = key;
+    }
+    // Dragging exchanges occupants of the existing slots without moving the others.
+    return slots.map((slot, index) => ({ ...slot, id: items[index]!.id }));
+  };
+}
+
 /** Partition all available space; incomplete rows expand instead of leaving empty cells. */
 export function calculateLayout(
   items: LayoutInput[],

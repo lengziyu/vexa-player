@@ -653,6 +653,7 @@ h1 {
   animation: fade-rise 0.45s var(--ease);
 }
 .wall-panel {
+  position: relative;
   border: 1px solid var(--strong-line);
   border-radius: 12px;
   background: var(--panel);
@@ -698,6 +699,29 @@ h1 {
   display: flex;
   align-items: center;
   gap: 7px;
+}
+.wall-add-button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 8px;
+  border: 1px solid var(--strong-line);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+.wall-add-button:hover {
+  color: var(--accent-text);
+  background: var(--accent-wash);
+}
+.wall-panel.is-fullscreen .wall-add-button {
+  color: #cabcdf;
+  border-color: #ffffff26;
+}
+.wall-undo {
+  flex-shrink: 0;
+  margin-left: 6px;
 }
 .wall-toolbar-right > .select-field {
   max-width: 120px;
@@ -1602,6 +1626,11 @@ h1 {
   display: flex;
   align-items: center;
   gap: 5px;
+}
+.library-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 .sort-controls > .select-field {
   min-width: 92px;
@@ -3098,6 +3127,17 @@ h1 {
   visibility: hidden;
   pointer-events: none;
 }
+.wall-panel.is-fullscreen .performance-notice {
+  position: absolute;
+  top: 67px;
+  left: 28px;
+  right: 28px;
+  z-index: 38;
+  margin: 0;
+  color: #d2bbf5;
+  background: #24212bf2;
+  border: 1px solid #ffffff26;
+}
 .performance-notice button {
   margin-left: auto;
   text-decoration: underline;
@@ -3287,6 +3327,27 @@ h1 {
   color: var(--accent-text);
   font-variant-numeric: tabular-nums;
   font-size: 10px;
+}
+.audio-routing {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--strong-line);
+  border-radius: 6px;
+}
+.audio-routing button {
+  min-height: 21px;
+  padding: 0 6px;
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 9px;
+  white-space: nowrap;
+}
+.audio-routing button:hover,
+.audio-routing button[aria-pressed="true"] {
+  color: var(--accent-text);
+  background: var(--accent-wash);
 }
 .wall-control-label output small {
   margin-left: 1px;

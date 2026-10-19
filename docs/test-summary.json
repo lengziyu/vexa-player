@@ -1,7 +1,7 @@
 {
   "date": "2026-10-19",
-  "version": "0.3.0",
-  "testedExecutable": "release/0.3.0/win-unpacked/Vexa Player.exe",
+  "version": "0.3.1",
+  "testedExecutable": "release/0.3.1/win-unpacked/Vexa Player.exe",
   "typecheck": {
     "success": true
   },
@@ -9,7 +9,7 @@
     "success": true
   },
   "unitTests": {
-    "passed": 100,
+    "passed": 110,
     "files": 13
   },
   "audit": {
@@ -17,9 +17,9 @@
     "scope": "npm dependencies; native binaries not audited"
   },
   "installer": {
-    "bytes": 133233677,
-    "path": "release/0.3.0/Vexa-Player-0.3.0-Windows-x64.exe",
-    "sha256": "be4998d491b677717a1eca254a0107d1a65473acc02b3dde6f59cd0f7b61eeae"
+    "bytes": 133213713,
+    "path": "release/0.3.1/Vexa-Player-0.3.1-Windows-x64.exe",
+    "sha256": "29a9a0e476bd9915c8dc315d2c1740f02e27809121bf83d0e52fd6779aa293fa"
   },
   "packaging": {
     "success": true,
@@ -45,15 +45,15 @@
       "locales": 55
     },
     "current": {
-      "version": "0.3.0",
-      "installerBytes": 133233677,
-      "installerSha256": "be4998d491b677717a1eca254a0107d1a65473acc02b3dde6f59cd0f7b61eeae",
-      "installedBytes": 502814673,
-      "asarBytes": 1970167,
+      "version": "0.3.1",
+      "installerBytes": 133213713,
+      "installerSha256": "29a9a0e476bd9915c8dc315d2c1740f02e27809121bf83d0e52fd6779aa293fa",
+      "installedBytes": 502842553,
+      "asarBytes": 1998047,
       "locales": 2
     },
-    "savedInstallerBytes": 34222258,
-    "savedInstallerPercent": 20.436575150352244,
+    "savedInstallerBytes": 34242222,
+    "savedInstallerPercent": 20.448497092682917,
     "media": [
       {
         "path": "ffmpeg-static/ffmpeg.exe",
@@ -67,6 +67,10 @@
   },
   "desktop": {
     "checks": [
+      {
+        "name": "fresh preferences disable both automatic replacement modes",
+        "passed": true
+      },
       {
         "name": "sandboxed renderer",
         "passed": true
@@ -260,7 +264,7 @@
         "detail": {
           "below": true,
           "width": 334,
-          "height": 310.296875,
+          "height": 314.296875,
           "bottom": 1417,
           "viewport": 1440,
           "inside": true
@@ -283,6 +287,18 @@
         "passed": true
       },
       {
+        "name": "all-audio mode unmutes every real player",
+        "passed": true
+      },
+      {
+        "name": "global mute still silences every player in all-audio mode",
+        "passed": true
+      },
+      {
+        "name": "focus-only mode restores a single audible player",
+        "passed": true
+      },
+      {
         "name": "unified speed reaches every real player",
         "passed": true
       },
@@ -300,6 +316,54 @@
       },
       {
         "name": "Escape dismisses the dropdown and restores button focus",
+        "passed": true
+      },
+      {
+        "name": "selection drawer leaves the wall size and player instances unchanged",
+        "passed": true
+      },
+      {
+        "name": "drawer adds a video without stopping the existing player",
+        "passed": true
+      },
+      {
+        "name": "default playback ends without replacing the selected video",
+        "passed": true
+      },
+      {
+        "name": "removal can be undone without recreating unaffected players",
+        "passed": true
+      },
+      {
+        "name": "targeted replacement preserves the other video and the target element",
+        "passed": true
+      },
+      {
+        "name": "replacement keeps every existing slot fixed",
+        "passed": true
+      },
+      {
+        "name": "manual reflow keeps playback and video elements alive",
+        "passed": true
+      },
+      {
+        "name": "replacement preserves global pause",
+        "passed": true
+      },
+      {
+        "name": "Escape closes the drawer and restores its trigger focus",
+        "passed": true
+      },
+      {
+        "name": "fullscreen drawer stays inside the wall and keeps controls visible",
+        "passed": true
+      },
+      {
+        "name": "fullscreen add and remove preserve unrelated playback",
+        "passed": true
+      },
+      {
+        "name": "import from the drawer keeps the wall and drawer open",
         "passed": true
       },
       {
@@ -328,6 +392,10 @@
       },
       {
         "name": "16-stream 1080p playback smoke",
+        "passed": true
+      },
+      {
+        "name": "fullscreen resource notice does not resize the playback wall",
         "passed": true
       },
       {
@@ -383,6 +451,14 @@
         "passed": true
       },
       {
+        "name": "visible select-all action selects every filtered page",
+        "passed": true
+      },
+      {
+        "name": "cancel clears the complete filtered selection",
+        "passed": true
+      },
+      {
         "name": "thumbnail size controls change card density",
         "passed": true,
         "detail": [
@@ -393,6 +469,14 @@
       },
       {
         "name": "library filters fit a narrow desktop window",
+        "passed": true
+      },
+      {
+        "name": "drawer independently searches and pages a large library with bounded rows",
+        "passed": true
+      },
+      {
+        "name": "privacy shortcut inside the picker closes the drawer and hides safely",
         "passed": true
       },
       {
@@ -415,37 +499,37 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.976954,
+            "currentTime": 3.97793,
             "paused": false,
             "error": null,
-            "frames": 119,
+            "frames": 120,
             "dropped": 0
           },
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.976995,
+            "currentTime": 3.977973,
             "paused": false,
             "error": null,
-            "frames": 119,
+            "frames": 120,
             "dropped": 0
           },
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.976959,
+            "currentTime": 3.97794,
             "paused": false,
             "error": null,
-            "frames": 119,
+            "frames": 120,
             "dropped": 0
           },
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.976951,
+            "currentTime": 3.977935,
             "paused": false,
             "error": null,
-            "frames": 119,
+            "frames": 120,
             "dropped": 0
           }
         ]
@@ -458,7 +542,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.974738,
+            "currentTime": 3.987171,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -467,7 +551,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.974788,
+            "currentTime": 3.987199,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -476,7 +560,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.974678,
+            "currentTime": 3.987103,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -485,7 +569,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.973832,
+            "currentTime": 3.986169,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -494,7 +578,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.973822,
+            "currentTime": 3.986161,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -503,7 +587,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.973815,
+            "currentTime": 3.986154,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -512,7 +596,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.97381,
+            "currentTime": 3.986148,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -521,16 +605,16 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.973798,
+            "currentTime": 3.986108,
             "paused": false,
             "error": null,
             "frames": 120,
             "dropped": 0
           },
           {
-            "width": 1921,
+            "width": 1920,
             "height": 1080,
-            "currentTime": 3.973793,
+            "currentTime": 3.986103,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -546,7 +630,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.987314,
+            "currentTime": 3.995897,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -555,7 +639,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.987342,
+            "currentTime": 3.995921,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -564,7 +648,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.987325,
+            "currentTime": 3.995905,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -573,7 +657,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.987317,
+            "currentTime": 3.995901,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -582,7 +666,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.987291,
+            "currentTime": 3.995882,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -591,7 +675,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.987284,
+            "currentTime": 3.995876,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -600,7 +684,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.987254,
+            "currentTime": 3.995871,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -609,16 +693,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.987242,
-            "paused": false,
-            "error": null,
-            "frames": 120,
-            "dropped": 0
-          },
-          {
-            "width": 1921,
-            "height": 1080,
-            "currentTime": 3.987203,
+            "currentTime": 3.995861,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -627,7 +702,7 @@
           {
             "width": 1920,
             "height": 1080,
-            "currentTime": 3.987111,
+            "currentTime": 3.995856,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -636,16 +711,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.987056,
-            "paused": false,
-            "error": null,
-            "frames": 120,
-            "dropped": 0
-          },
-          {
-            "width": 1921,
-            "height": 1080,
-            "currentTime": 3.987013,
+            "currentTime": 3.995852,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -654,7 +720,7 @@
           {
             "width": 1920,
             "height": 1080,
-            "currentTime": 3.986999,
+            "currentTime": 3.995843,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -663,7 +729,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.98699,
+            "currentTime": 3.995838,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -672,7 +738,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.986912,
+            "currentTime": 3.995833,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -681,7 +747,25 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.986356,
+            "currentTime": 3.995824,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.995764,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.995718,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -728,7 +812,7 @@
         "electron": "44.9.0",
         "chrome": "152.0.7977.167"
       },
-      "version": "0.3.0"
+      "version": "0.3.1"
     },
     "success": true
   },
@@ -754,7 +838,23 @@
       "syntheticLowComplexity": true,
       "stats": [
         {
-          "time": 3.608075,
+          "time": 3.613575,
+          "paused": false,
+          "error": null,
+          "frames": 109,
+          "dropped": 10,
+          "advancedFrames": 99
+        },
+        {
+          "time": 3.613622,
+          "paused": false,
+          "error": null,
+          "frames": 111,
+          "dropped": 7,
+          "advancedFrames": 101
+        },
+        {
+          "time": 3.615877,
           "paused": false,
           "error": null,
           "frames": 109,
@@ -762,257 +862,241 @@
           "advancedFrames": 99
         },
         {
-          "time": 3.659586,
-          "paused": false,
-          "error": null,
-          "frames": 112,
-          "dropped": 2,
-          "advancedFrames": 102
-        },
-        {
-          "time": 3.670732,
-          "paused": false,
-          "error": null,
-          "frames": 112,
-          "dropped": 3,
-          "advancedFrames": 102
-        },
-        {
-          "time": 3.684453,
-          "paused": false,
-          "error": null,
-          "frames": 112,
-          "dropped": 4,
-          "advancedFrames": 102
-        },
-        {
-          "time": 3.64456,
-          "paused": false,
-          "error": null,
-          "frames": 111,
-          "dropped": 3,
-          "advancedFrames": 101
-        },
-        {
-          "time": 3.644509,
-          "paused": false,
-          "error": null,
-          "frames": 111,
-          "dropped": 3,
-          "advancedFrames": 101
-        },
-        {
-          "time": 3.660064,
-          "paused": false,
-          "error": null,
-          "frames": 111,
-          "dropped": 1,
-          "advancedFrames": 101
-        },
-        {
-          "time": 3.504471,
+          "time": 3.614966,
           "paused": false,
           "error": null,
           "frames": 109,
-          "dropped": 32,
-          "advancedFrames": 105
-        },
-        {
-          "time": 3.780246,
-          "paused": false,
-          "error": null,
-          "frames": 114,
-          "dropped": 8,
-          "advancedFrames": 104
-        },
-        {
-          "time": 3.486696,
-          "paused": false,
-          "error": null,
-          "frames": 108,
-          "dropped": 33,
-          "advancedFrames": 104
-        },
-        {
-          "time": 3.473769,
-          "paused": false,
-          "error": null,
-          "frames": 108,
-          "dropped": 28,
-          "advancedFrames": 104
-        },
-        {
-          "time": 3.486351,
-          "paused": false,
-          "error": null,
-          "frames": 113,
-          "dropped": 36,
-          "advancedFrames": 105
-        },
-        {
-          "time": 3.468747,
-          "paused": false,
-          "error": null,
-          "frames": 109,
-          "dropped": 35,
-          "advancedFrames": 105
-        },
-        {
-          "time": 3.644498,
-          "paused": false,
-          "error": null,
-          "frames": 110,
           "dropped": 0,
+          "advancedFrames": 99
+        },
+        {
+          "time": 3.614985,
+          "paused": false,
+          "error": null,
+          "frames": 109,
+          "dropped": 2,
+          "advancedFrames": 99
+        },
+        {
+          "time": 3.612978,
+          "paused": false,
+          "error": null,
+          "frames": 108,
+          "dropped": 4,
+          "advancedFrames": 99
+        },
+        {
+          "time": 3.62333,
+          "paused": false,
+          "error": null,
+          "frames": 108,
+          "dropped": 2,
+          "advancedFrames": 99
+        },
+        {
+          "time": 3.610787,
+          "paused": false,
+          "error": null,
+          "frames": 106,
+          "dropped": 3,
+          "advancedFrames": 98
+        },
+        {
+          "time": 3.370763,
+          "paused": false,
+          "error": null,
+          "frames": 105,
+          "dropped": 32,
+          "advancedFrames": 101
+        },
+        {
+          "time": 3.370761,
+          "paused": false,
+          "error": null,
+          "frames": 105,
+          "dropped": 32,
+          "advancedFrames": 101
+        },
+        {
+          "time": 3.342515,
+          "paused": false,
+          "error": null,
+          "frames": 104,
+          "dropped": 27,
           "advancedFrames": 100
         },
         {
-          "time": 3.614772,
+          "time": 3.622528,
+          "paused": false,
+          "error": null,
+          "frames": 107,
+          "dropped": 4,
+          "advancedFrames": 98
+        },
+        {
+          "time": 3.320655,
+          "paused": false,
+          "error": null,
+          "frames": 104,
+          "dropped": 30,
+          "advancedFrames": 100
+        },
+        {
+          "time": 3.622505,
+          "paused": false,
+          "error": null,
+          "frames": 107,
+          "dropped": 2,
+          "advancedFrames": 98
+        },
+        {
+          "time": 3.31905,
+          "paused": false,
+          "error": null,
+          "frames": 104,
+          "dropped": 32,
+          "advancedFrames": 100
+        },
+        {
+          "time": 3.373815,
           "paused": false,
           "error": null,
           "frames": 109,
-          "dropped": 2,
-          "advancedFrames": 99
+          "dropped": 37,
+          "advancedFrames": 101
         },
         {
-          "time": 3.472735,
-          "paused": false,
-          "error": null,
-          "frames": 112,
-          "dropped": 40,
-          "advancedFrames": 105
-        },
-        {
-          "time": 3.426763,
-          "paused": false,
-          "error": null,
-          "frames": 106,
-          "dropped": 29,
-          "advancedFrames": 102
-        },
-        {
-          "time": 3.606722,
-          "paused": false,
-          "error": null,
-          "frames": 108,
-          "dropped": 0,
-          "advancedFrames": 98
-        },
-        {
-          "time": 3.41275,
-          "paused": false,
-          "error": null,
-          "frames": 106,
-          "dropped": 30,
-          "advancedFrames": 102
-        },
-        {
-          "time": 3.386756,
-          "paused": false,
-          "error": null,
-          "frames": 106,
-          "dropped": 27,
-          "advancedFrames": 102
-        },
-        {
-          "time": 3.60675,
-          "paused": false,
-          "error": null,
-          "frames": 108,
-          "dropped": 0,
-          "advancedFrames": 98
-        },
-        {
-          "time": 3.354761,
-          "paused": false,
-          "error": null,
-          "frames": 106,
-          "dropped": 28,
-          "advancedFrames": 102
-        },
-        {
-          "time": 3.714843,
+          "time": 3.419066,
           "paused": false,
           "error": null,
           "frames": 111,
-          "dropped": 2,
-          "advancedFrames": 101
+          "dropped": 41,
+          "advancedFrames": 103
         },
         {
-          "time": 3.344573,
+          "time": 3.302547,
+          "paused": false,
+          "error": null,
+          "frames": 103,
+          "dropped": 32,
+          "advancedFrames": 99
+        },
+        {
+          "time": 3.287128,
+          "paused": false,
+          "error": null,
+          "frames": 103,
+          "dropped": 32,
+          "advancedFrames": 99
+        },
+        {
+          "time": 3.278759,
+          "paused": false,
+          "error": null,
+          "frames": 103,
+          "dropped": 36,
+          "advancedFrames": 99
+        },
+        {
+          "time": 3.257666,
+          "paused": false,
+          "error": null,
+          "frames": 103,
+          "dropped": 30,
+          "advancedFrames": 99
+        },
+        {
+          "time": 3.257598,
+          "paused": false,
+          "error": null,
+          "frames": 103,
+          "dropped": 33,
+          "advancedFrames": 99
+        },
+        {
+          "time": 3.24983,
+          "paused": false,
+          "error": null,
+          "frames": 103,
+          "dropped": 34,
+          "advancedFrames": 99
+        },
+        {
+          "time": 3.246961,
+          "paused": false,
+          "error": null,
+          "frames": 103,
+          "dropped": 37,
+          "advancedFrames": 99
+        },
+        {
+          "time": 3.213839,
+          "paused": false,
+          "error": null,
+          "frames": 103,
+          "dropped": 30,
+          "advancedFrames": 99
+        },
+        {
+          "time": 3.186122,
+          "paused": false,
+          "error": null,
+          "frames": 103,
+          "dropped": 31,
+          "advancedFrames": 99
+        },
+        {
+          "time": 3.213823,
+          "paused": false,
+          "error": null,
+          "frames": 103,
+          "dropped": 36,
+          "advancedFrames": 99
+        },
+        {
+          "time": 3.18499,
+          "paused": false,
+          "error": null,
+          "frames": 103,
+          "dropped": 34,
+          "advancedFrames": 99
+        },
+        {
+          "time": 3.193818,
+          "paused": false,
+          "error": null,
+          "frames": 102,
+          "dropped": 33,
+          "advancedFrames": 98
+        },
+        {
+          "time": 3.193794,
+          "paused": false,
+          "error": null,
+          "frames": 102,
+          "dropped": 34,
+          "advancedFrames": 98
+        },
+        {
+          "time": 3.199779,
+          "paused": false,
+          "error": null,
+          "frames": 102,
+          "dropped": 37,
+          "advancedFrames": 98
+        },
+        {
+          "time": 3.306686,
           "paused": false,
           "error": null,
           "frames": 106,
           "dropped": 27,
-          "advancedFrames": 102
-        },
-        {
-          "time": 3.606749,
-          "paused": false,
-          "error": null,
-          "frames": 108,
-          "dropped": 2,
           "advancedFrames": 98
-        },
-        {
-          "time": 3.330762,
-          "paused": false,
-          "error": null,
-          "frames": 106,
-          "dropped": 25,
-          "advancedFrames": 102
-        },
-        {
-          "time": 3.34456,
-          "paused": false,
-          "error": null,
-          "frames": 106,
-          "dropped": 30,
-          "advancedFrames": 102
-        },
-        {
-          "time": 3.304481,
-          "paused": false,
-          "error": null,
-          "frames": 105,
-          "dropped": 26,
-          "advancedFrames": 101
-        },
-        {
-          "time": 3.330753,
-          "paused": false,
-          "error": null,
-          "frames": 105,
-          "dropped": 32,
-          "advancedFrames": 101
-        },
-        {
-          "time": 3.274779,
-          "paused": false,
-          "error": null,
-          "frames": 105,
-          "dropped": 29,
-          "advancedFrames": 101
-        },
-        {
-          "time": 3.301749,
-          "paused": false,
-          "error": null,
-          "frames": 105,
-          "dropped": 34,
-          "advancedFrames": 101
-        },
-        {
-          "time": 3.274766,
-          "paused": false,
-          "error": null,
-          "frames": 105,
-          "dropped": 33,
-          "advancedFrames": 101
         }
       ]
     },
     "minimumAdvancedFrames": 98,
-    "cumulativeDroppedFrames": 588
+    "cumulativeDroppedFrames": 765
   },
   "xAuth": {
     "checks": [
@@ -1047,7 +1131,7 @@
     "credentials": "synthetic only; no real account login performed"
   },
   "downloads": {
-    "date": "2026-10-19T02:19:20.833Z",
+    "date": "2026-10-19T09:25:46.043Z",
     "source": "https://x.com/BrooklynNets/status/1349794411333394432",
     "checks": [
       "download navigation and initial empty state",
@@ -1088,7 +1172,7 @@
         "playing": true,
         "width": 320,
         "height": 180,
-        "currentTime": 1.655378,
+        "currentTime": 1.65644,
         "error": null,
         "visibleError": null
       },
@@ -1097,7 +1181,7 @@
         "playing": true,
         "width": 320,
         "height": 180,
-        "currentTime": 1.650397,
+        "currentTime": 1.646459,
         "error": null,
         "visibleError": null
       },
@@ -1106,7 +1190,7 @@
         "playing": true,
         "width": 320,
         "height": 180,
-        "currentTime": 1.641373,
+        "currentTime": 1.636471,
         "error": null,
         "visibleError": null
       },
@@ -1115,7 +1199,7 @@
         "playing": true,
         "width": 320,
         "height": 180,
-        "currentTime": 1.59943,
+        "currentTime": 1.581837,
         "error": null,
         "visibleError": null
       },
@@ -1133,7 +1217,7 @@
         "playing": true,
         "width": 320,
         "height": 180,
-        "currentTime": 1.663432,
+        "currentTime": 1.651483,
         "error": null,
         "visibleError": null
       }

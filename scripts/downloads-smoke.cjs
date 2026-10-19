@@ -15,6 +15,8 @@ const { tmpdir } = require("node:os");
 const { spawnSync } = require("node:child_process");
 const probe = require("@ffprobe-installer/ffprobe").path;
 const project = resolve(__dirname, "..");
+const screenshots =
+  process.env.VEXA_TEST_SCREENSHOTS || join(project, "docs/screenshots");
 const result = {
   date: new Date().toISOString(),
   source: "https://x.com/BrooklynNets/status/1349794411333394432",
@@ -42,7 +44,7 @@ async function until(predicate, timeout = 30000) {
   await mkdir(data);
   await mkdir(destination);
   await mkdir(join(project, "test-results"), { recursive: true });
-  await mkdir(join(project, "docs/screenshots"), { recursive: true });
+  await mkdir(screenshots, { recursive: true });
   app = await _electron.launch({
     executablePath: process.env.VEXA_TEST_EXECUTABLE || require("electron"),
     args: [
@@ -71,7 +73,7 @@ async function until(predicate, timeout = 30000) {
       .status === "missing",
   );
   await page.screenshot({
-    path: join(project, "docs/screenshots/downloads-dark.png"),
+    path: join(screenshots, "downloads-dark.png"),
     fullPage: true,
     animations: "disabled",
   });
@@ -213,7 +215,7 @@ async function until(predicate, timeout = 30000) {
   );
   await page.getByRole("button", { name: "切换浅色主题", exact: true }).click();
   await page.screenshot({
-    path: join(project, "docs/screenshots/downloads-light.png"),
+    path: join(screenshots, "downloads-light.png"),
     fullPage: true,
     animations: "disabled",
   });

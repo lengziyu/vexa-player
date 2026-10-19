@@ -13,6 +13,8 @@ const { join, resolve } = require("node:path");
 const { tmpdir } = require("node:os");
 const { spawnSync } = require("node:child_process");
 const project = resolve(__dirname, "..");
+const screenshots =
+  process.env.VEXA_TEST_SCREENSHOTS || join(project, "docs/screenshots");
 const results = { checks: [], errors: [], performance: null };
 let root, app, page;
 function check(name, value) {
@@ -224,9 +226,9 @@ async function count(value) {
         item.frames > baseline[index],
     ),
   );
-  await mkdir(join(project, "docs/screenshots"), { recursive: true });
+  await mkdir(screenshots, { recursive: true });
   await page.screenshot({
-    path: join(project, "docs/screenshots/wall-32.png"),
+    path: join(screenshots, "wall-32.png"),
     fullPage: true,
     animations: "disabled",
   });

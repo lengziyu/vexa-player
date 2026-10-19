@@ -15,6 +15,7 @@ const props = defineProps<{
 }>();
 const emit = defineEmits<{
   shuffle: [id: string];
+  replace: [id: string];
   info: [id: string];
   error: [error: unknown];
 }>();
@@ -211,6 +212,14 @@ onBeforeUnmount(() => {
     <div class="tile-actions">
       <button
         class="tile-action"
+        title="从视频库选择替换，其他画面继续播放"
+        aria-label="选择视频替换此画面"
+        @click.stop="emit('replace', tile.id)"
+      >
+        <Icon name="folder" :size="14" />
+      </button>
+      <button
+        class="tile-action"
         title="设为主画面"
         aria-label="设为主画面"
         @click.stop="wall.main(tile.id).catch((error) => emit('error', error))"
@@ -241,9 +250,9 @@ onBeforeUnmount(() => {
         <Icon name="info" :size="14" /></button
       ><button
         class="tile-action"
-        title="关闭画面"
+        title="移出播放墙，不删除原文件；可撤销"
         aria-label="关闭画面"
-        @click.stop="wall.remove(tile.id)"
+        @click.stop="wall.remove(tile.id, true)"
       >
         <Icon name="close" :size="14" />
       </button>

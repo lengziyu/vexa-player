@@ -116,16 +116,18 @@ async function openLoginPanel() {
       .getByRole("button", { name: "X 登录与隐私", exact: true })
       .evaluate((button) => button === document.activeElement),
   );
-  await mkdir(join(project, "docs/screenshots"), { recursive: true });
+  const screenshots =
+    process.env.VEXA_TEST_SCREENSHOTS || join(project, "docs/screenshots");
+  await mkdir(screenshots, { recursive: true });
   await openLoginPanel();
   await loginPanel().screenshot({
-    path: join(project, "docs/screenshots/x-login-dark.png"),
+    path: join(screenshots, "x-login-dark.png"),
     animations: "disabled",
   });
   await page.getByRole("button", { name: "切换浅色主题", exact: true }).click();
   await openLoginPanel();
   await loginPanel().screenshot({
-    path: join(project, "docs/screenshots/x-login-light.png"),
+    path: join(screenshots, "x-login-light.png"),
     animations: "disabled",
   });
   check(
