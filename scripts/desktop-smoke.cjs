@@ -860,11 +860,13 @@ async function main() {
     .getByRole("button", { name: "播放此画面", exact: true })
     .click();
   await page.locator(".video-tile").nth(2).hover();
+  // Exercise keyboard activation here: on compact tiles the title can overlap
+  // the center hit point. The first tile above already tests pointer activation.
   await page
     .locator(".video-tile")
     .nth(2)
     .getByRole("button", { name: "暂停此画面", exact: true })
-    .click();
+    .press("Space");
   await page.getByRole("button", { name: "暂停非主画面", exact: true }).click();
   await until(
     async () =>
@@ -1211,6 +1213,8 @@ async function main() {
     (await page.locator(".video-tile").count()) === wallCountBeforeFavorite,
   );
   await page.getByRole("button", { name: "我的收藏", exact: true }).click();
+  // Navigation starts an asynchronous library query; wait for its rendered result.
+  await until(async () => (await page.locator(".library-card").count()) === 1);
   check(
     "favorite filter shows persisted selection",
     (await page.locator(".library-card").count()) === 1,
@@ -1332,7 +1336,8 @@ async function main() {
   );
   check("shift selection spans unloaded library pages", true);
   await page.getByRole("button", { name: "取消选择", exact: true }).click();
-  await page.keyboard.press("Control+a");
+  await page.locator(".library-card").last().focus();
+  await page.keyboard.press("ControlOrMeta+a");
   await until(
     async () =>
       (await page.locator(".selection-bar strong").textContent()) === "3017",

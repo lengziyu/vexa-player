@@ -134,7 +134,9 @@ async function count(value) {
     60000,
   );
   await page.locator(".library-card").first().waitFor();
-  await page.keyboard.press("Control+a");
+  await page.waitForFunction(() => document.querySelector(".virtual-media-grid")?.getAttribute("data-total") === "33");
+  await page.locator(".library-card").first().focus();
+  await page.keyboard.press("ControlOrMeta+a");
   await until(
     async () =>
       (await page.locator(".selection-bar strong").textContent()) === "33",

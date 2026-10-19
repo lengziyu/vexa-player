@@ -35,12 +35,21 @@ async function main() {
   const cards=page.locator('.library-card');assert.equal(await cards.count(),6);
   for(let i=0;i<6;i++)await cards.nth(i).click();
   await page.getByRole('button',{name:'创建播放墙',exact:true}).click();
-  await page.waitForTimeout(1800);
-  const results=await page.locator('.video-tile').evaluateAll(tiles=>tiles.map(tile=>{const video=tile.querySelector('video');return{name:tile.querySelector('.tile-title strong').textContent,playing:video.readyState>=2&&video.currentTime>0&&!video.error,width:video.videoWidth,height:video.videoHeight,currentTime:video.currentTime,error:video.error?.message||null,visibleError:tile.querySelector('.tile-error p')?.textContent||null}}));
+  // Decode startup varies between native CPUs and Rosetta. Wait for an actual
+  // playback/error outcome and retain diagnostics even if a baseline fails.
+  let results=[];
+  const playbackDeadline=Date.now()+30000;
+  while(Date.now()<playbackDeadline){
+    results=await page.locator('.video-tile').evaluateAll(tiles=>tiles.map(tile=>{const video=tile.querySelector('video');return{name:tile.querySelector('.tile-title strong').textContent,playing:video.readyState>=2&&video.currentTime>0&&!video.error,width:video.videoWidth,height:video.videoHeight,currentTime:video.currentTime,error:video.error?.message||null,visibleError:tile.querySelector('.tile-error p')?.textContent||null}}));
+    if(results.length===definitions.length&&results.every(r=>r.playing||r.visibleError))break;
+    await page.waitForTimeout(100);
+  }
+  const success=results.length===definitions.length&&!!results.find(r=>r.name==='H264-AAC.mp4')?.playing&&!!results.find(r=>r.name==='VP9-Opus.webm')?.playing&&results.every(r=>r.playing||r.visibleError);
+  await mkdir(output,{recursive:true});await writeFile(join(output,'codec-results.json'),JSON.stringify({success,platform:process.platform,arch:process.arch,results},null,2));
+  console.log(JSON.stringify(results,null,2));
+  assert.equal(results.length,definitions.length,'Every codec sample must have a player');
   assert.ok(results.find(r=>r.name==='H264-AAC.mp4')?.playing,'H264 MP4 baseline failed');
   assert.ok(results.find(r=>r.name==='VP9-Opus.webm')?.playing,'VP9 WebM baseline failed');
   assert.ok(results.every(r=>r.playing||r.visibleError),'Every unsupported format needs a visible error');
-  await mkdir(output,{recursive:true});await writeFile(join(output,'codec-results.json'),JSON.stringify({success:true,platform:process.platform,arch:process.arch,results},null,2));
-  console.log(JSON.stringify(results,null,2));
 }
 main().catch(error=>{console.error(error);process.exitCode=1}).finally(async()=>{if(app)await app.close().catch(()=>{});if(temporary&&resolve(temporary).startsWith(resolve(tmpdir()))&&temporary.includes('vexa-codec-test-'))await rm(temporary,{recursive:true,force:true})});

@@ -4,6 +4,10 @@
 
 同日补充 macOS Apple Silicon 包：在 Apple M4、24 GiB、macOS 26.5.1 上，从最终 DMG 挂载复制出的应用通过 80 项桌面、12 项容量与倍速、26 项登录、16 项真实下载和 17 项安装包检查；110 项单元测试与生产构建通过。6 种编码样本中 5 种播放，AVI 显示不支持提示。DMG 为 134,346,684 字节，SHA-256 为 `eb6976506a4e785493a22ef3f3832f397b5a071ef82cddcf3314758ab751cef4`；ad-hoc 签名，未经 Apple 公证。完整 macOS 记录与范围限制见[独立说明](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/macOS-arm64-SELF_TEST.txt)和[测试记录](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/macOS-arm64-test-summary.json)。以下环境与详细表格继续保留原 Windows 测试记录。
 
+同日补充 macOS Intel 包：在上述 M4 上通过 Rosetta 运行 x64 Node.js，在独立目录安装 x64 依赖后构建，并直接测试从最终 DMG 复制出的 Intel 应用。110 项单元、80 项桌面、12 项容量与倍速、16 项真实下载和 17 项安装包检查通过；6 种编码样本中 5 种播放，AVI 显示不支持提示。**登录与系统加密存储检查因钥匙串授权等待而按用户要求跳过；未进行 Intel 真机性能及硬件兼容性验收。** DMG 为 162,795,969 字节，SHA-256 为 `ab947b8fbafaec3ac87a5f76f59170b5c32c20812e956aaf887ef3b6df6fefb5`；macOS 13.0+，ad-hoc 签名，未经 Apple 公证。见 [Intel 独立说明](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/macOS-x64-SELF_TEST.txt)和[测试记录](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/macOS-x64-test-summary.json)。
+
+Intel 复测发现的界面限制：主次布局中，小画面的标题可能遮挡暂停按钮中心的鼠标点击位置；本轮通过聚焦按钮后按空格验证该画面的暂停，主画面的鼠标暂停另有覆盖。此版本尚未修复该布局问题。测试脚本另补充了视频库渲染、编码起播的状态等待，以及全选前的焦点和平台快捷键处理。
+
 ## 环境与隔离
 
 Windows 11 x64（10.0.26200），Intel Core i5-12490F、32 GB 内存、NVIDIA GeForce RTX 3060。Electron 44.9.0、Chromium 152.0.7977.167、内置 Node.js 24.22.0。自动化使用独立临时视频库与应用目录，不读取用户账号、登录信息或真实视频资料。正式应用初始为空库。
@@ -79,7 +83,7 @@ SHA-256：`29a9a0e476bd9915c8dc315d2c1740f02e27809121bf83d0e52fd6779aa293fa`。
 
 编码测试为 320×180、24fps、5 秒真实视频：MP4 H.264/AAC、MKV H.264/AAC、WebM VP9/Opus、MP4 HEVC 8-bit/AAC、MKV AV1/Opus 可播放；AVI MPEG-4 Part 2/MP3 显示当前内核不支持，其他画面正常播放。测试为静音音轨，未做音频听感验收，也不代表 HEVC 10-bit、4K、HDR 或全部格式均已支持。
 
-macOS Intel、其他 macOS 版本、Windows 10、其他显卡、长期内存/显存稳定性及高码率多路压力未验收。X 任务暂不跨重启保存，登录后也受平台和账号权限限制。
+Intel Mac 真机、其他 macOS 版本、Windows 10、其他显卡、长期内存/显存稳定性及高码率多路压力未验收；Intel 安装包已完成上方所述的 Rosetta 功能检查。X 任务暂不跨重启保存，登录后也受平台和账号权限限制。
 
 ## 复现与记录
 
