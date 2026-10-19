@@ -61,8 +61,8 @@ async function main() {
     args: [...(process.env.VEXA_TEST_EXECUTABLE ? [] : ['.']), `--user-data-dir=${data}`],
     cwd: project, env: { ...process.env, ELECTRON_RUN_AS_NODE: undefined, VEXA_DATA_DIR: data },
   });
-  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setIgnoreMouseEvents(true));
   page = await app.firstWindow();
+  await app.evaluate(({ BrowserWindow }) => BrowserWindow.getAllWindows()[0].setIgnoreMouseEvents(true));
   page.on('pageerror', error => report.errors.push(error.message));
   await page.getByRole('heading', { name: '你的私人放映室.' }).waitFor();
   await app.evaluate(({ dialog }, folder) => { dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [folder] }); }, videos);

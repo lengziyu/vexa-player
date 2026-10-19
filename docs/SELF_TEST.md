@@ -2,9 +2,39 @@
 
 日期：2026-10-19。结论：Windows x64 开发版通过下列检查；发布记录中的桌面、容量、登录面板、真实下载及编码检查均直接运行最终打包目录中的程序。安装器实际安装/卸载和长期性能验收仍未完成。
 
+## macOS 更新打包（2026-10-19）
+
+按源码提交 `985d41c5d0baa1f4a19d734a4e0e03d9b93a8b14` 重新构建两种架构，版本仍为 0.3.1。本轮包含 Vexa 图标、菜单栏驻留、下载区对齐和多视频控制优化；替换 Release 中原有 Mac 包及其校验、测试记录。Windows 包仍保留原发布内容。
+
+环境：Apple M4、24 GiB、macOS 26.5.1；arm64 原生构建运行，x64 使用独立 x64 Node.js 与依赖构建，并经 Rosetta 运行。113 项单元测试（14 个文件）在 arm64 环境通过，两版类型检查和生产构建均通过。
+
+| 从最终 DMG 复制出的应用 | M 芯片版 | Intel 版 |
+| --- | --- | --- |
+| 安装包、架构、嵌套签名、品牌图标及菜单栏资源 | 20 项通过 | 20 项通过 |
+| 桌面流程 | 80 项通过 | 80 项通过 |
+| 32 路容量及高倍速 | 12 项通过 | 12 项通过 |
+| 24 路进度与音量优化 | 13 项通过 | 13 项通过 |
+| 窗口生命周期与下载区对齐 | 16 项通过 | 16 项通过 |
+| 公开 X 样本真实下载、入库和播放 | 16 项通过 | 16 项通过 |
+| 编码样本 | 5 种播放，AVI 明确提示不支持 | 5 种播放，AVI 明确提示不支持 |
+| 登录与系统加密存储 | 按用户此前选择跳过 | 按用户此前选择跳过 |
+
+窗口检查包括全屏关闭后驻留、暂停并静音，隐藏期间下载管理器响应，Dock/二次启动恢复、保持暂停、手动继续播放和明确退出。另在 arm64 生产源码构建上通过 17 项真实菜单栏对象与菜单操作检查；该组使用外部测试启动器，与安装包测试分开记录。Mac 全屏切换需等待原生动画完成，Rosetta 启动时也需等首个窗口创建；本轮相应补充测试等待，未修改应用运行时代码。
+
+24 路拖动检查确认：单画面松开后仅跳转一次，统一进度松开后每路一次，音量操作不反复写入倍速及循环设置；实际鼠标拖到滑块外松开后仍正常提交。两版的详细计数和短时帧推进数据均随 JSON 记录发布，不以属性写入次数下降推断相同比例的性能提升。
+
+| 安装包 | 字节数 | SHA-256 |
+| --- | --- | --- |
+| arm64 | 134,400,591 | `2e58e3c62d9cb227da720c421cbcb2845302d2547a4dbc4b1ea2164eafaec5d1` |
+| x64 | 162,896,354 | `6a03d0c0bf41dfb619c8287a338a4a02f0bdf5bdbaaf1569d3a1b670ebace3a3` |
+
+独立记录：[M 芯片说明](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/macOS-arm64-SELF_TEST.txt) · [M 芯片 JSON](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/macOS-arm64-test-summary.json) · [Intel 说明](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/macOS-x64-SELF_TEST.txt) · [Intel JSON](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/macOS-x64-test-summary.json)。此前 Mac 包的校验值与通过记录不作为本轮结果。
+
+范围限制：macOS 13.0+；ad-hoc 签名，未经 Apple 公证。Intel 真机、真实账号登录、HDR、复杂高码率和长期多路负载仍未验收。小画面标题可能遮挡暂停按钮中心点击位置的问题保留，可聚焦按钮后按空格；该问题未在本次打包中修复。
+
 ## 发布后的本地性能优化复测（2026-10-19）
 
-本节使用当前源码的生产构建，尚未重新打包或发布；后续章节继续保留 v0.3.1 已发布安装包的检查记录。113 项单元/集成检查（14 个文件）、80 项桌面流程、12 项 32 路容量检查，以及 13 项多路拖动回归通过，均无渲染错误。
+本节保留 Windows 环境下的源码性能对照记录；当时尚未重新打包。最新 Mac 包的重新构建与检查结果见上方 macOS 更新打包章节；后续 Windows 安装包记录继续保留原发布数据。113 项单元/集成检查（14 个文件）、80 项桌面流程、12 项 32 路容量检查，以及 13 项多路拖动回归通过，均无渲染错误。
 
 对照使用已发布的 v0.3.1 打包程序和当前源码，同一台电脑、24 路生成的低复杂度 1080P H.264/AAC 视频，在独立临时目录运行。每组拖动发送 60 次滑块输入再松开，音量组发送 40 次输入。统计的是实际 HTMLMediaElement 属性写入次数：
 
@@ -20,12 +50,6 @@
 最后一次统一跳转完成后另取 1.5 秒采样，24 路各至少推进 45 帧，均继续播放。上述写入次数下降不能表述为相同比例的播放性能提升；未用真实高码率 4K 收藏视频做长期验收，也未确认每一路的硬解方式。
 
 复现：运行 `npm run test:seek`，输出 `test-results/seek-results.json`；设置 `VEXA_TEST_EXECUTABLE` 可选择已打包程序，`VEXA_SEEK_ASSERT=0` 只采集旧版对照。结构化留存见 [performance-comparison.json](performance-comparison.json)。
-
-同日补充 macOS Apple Silicon 包：在 Apple M4、24 GiB、macOS 26.5.1 上，从最终 DMG 挂载复制出的应用通过 80 项桌面、12 项容量与倍速、26 项登录、16 项真实下载和 17 项安装包检查；110 项单元测试与生产构建通过。6 种编码样本中 5 种播放，AVI 显示不支持提示。DMG 为 134,346,684 字节，SHA-256 为 `eb6976506a4e785493a22ef3f3832f397b5a071ef82cddcf3314758ab751cef4`；ad-hoc 签名，未经 Apple 公证。完整 macOS 记录与范围限制见[独立说明](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/macOS-arm64-SELF_TEST.txt)和[测试记录](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/macOS-arm64-test-summary.json)。以下环境与详细表格继续保留原 Windows 测试记录。
-
-同日补充 macOS Intel 包：在上述 M4 上通过 Rosetta 运行 x64 Node.js，在独立目录安装 x64 依赖后构建，并直接测试从最终 DMG 复制出的 Intel 应用。110 项单元、80 项桌面、12 项容量与倍速、16 项真实下载和 17 项安装包检查通过；6 种编码样本中 5 种播放，AVI 显示不支持提示。**登录与系统加密存储检查因钥匙串授权等待而按用户要求跳过；未进行 Intel 真机性能及硬件兼容性验收。** DMG 为 162,795,969 字节，SHA-256 为 `ab947b8fbafaec3ac87a5f76f59170b5c32c20812e956aaf887ef3b6df6fefb5`；macOS 13.0+，ad-hoc 签名，未经 Apple 公证。见 [Intel 独立说明](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/macOS-x64-SELF_TEST.txt)和[测试记录](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/macOS-x64-test-summary.json)。
-
-Intel 复测发现的界面限制：主次布局中，小画面的标题可能遮挡暂停按钮中心的鼠标点击位置；本轮通过聚焦按钮后按空格验证该画面的暂停，主画面的鼠标暂停另有覆盖。此版本尚未修复该布局问题。测试脚本另补充了视频库渲染、编码起播的状态等待，以及全选前的焦点和平台快捷键处理。
 
 ## 环境与隔离
 
@@ -124,13 +148,13 @@ node scripts/codec-smoke.cjs
 
 ## 本地增量检查：品牌图标、托盘与下载区对齐（2026-10-19）
 
-本节针对未上传的本地修改，与上面已发布 v0.3.1 安装包的体积和校验值分别记录。测试包位于 `.cache/branding-package/`，尚未替换 GitHub Release 中的文件。
+本节保留 Windows 环境下的品牌与托盘增量检查记录。Windows 测试包位于 `.cache/branding-package/`，未替换 GitHub Release 中的 Windows 文件；Mac 新包已另行构建，见上方 macOS 更新打包章节。
 
 - 补齐 Vexa 的 Windows ICO、Mac ICNS、1024px PNG、菜单栏模板及安装/卸载向导图片；覆盖应用窗口、登录子窗口、安装器、快捷方式、托盘、Dock 与 DMG 的配置。ICO 含 16～256px 七种尺寸，ICNS 含 16～1024px 图片，Mac 模板含普通与 Retina 尺寸。
 - 托盘与界面增量检查 17 项通过：首次启动创建数据目录、沿用既有数据和缓存位置、关闭全屏窗口后暂停与静音、隐藏时下载管理器仍可响应、托盘恢复后保持暂停、手动继续播放、双击恢复、明确退出并销毁托盘；同时检查深浅主题、1440px 和 960px 窗宽下输入框和解析按钮的高度及上下边界一致。
 - 113 个单元测试通过；Windows 实际程序桌面回归 80 项通过；合成 X 登录回归 26 项通过。本轮未使用真实账号，也未重新进行真实 X 视频传输测试。
 - Windows 安装包检查增加运行时品牌资源、程序和安装器的产品名称及内嵌图标核对；图标数据与源 ICO 的全部尺寸逐一比较，并继续检查归档解压、CRC、媒体工具与许可文件。
-- Mac 图标文件的格式、尺寸及打包路径已检查，本轮在 Windows 上进行，未重新构建或运行 Mac 安装包；需在 Mac 环境重打包并验证菜单栏驻留。
+- 此历史轮次在 Windows 上检查了 Mac 图标格式、尺寸及打包路径。后续已在 Mac 环境重新构建两种架构，并完成菜单栏驻留和安装包检查，见上方 macOS 章节。
 
 复现：`npm run icons`、`npm run test:tray`，以及使用本地测试包运行既有桌面、X 登录和安装包检查。原始记录位于 `test-results/branding-tray/results.json`、`test-results/desktop-results.json`、`test-results/x-auth-results.json` 和 `test-results/package-results.json`。
 

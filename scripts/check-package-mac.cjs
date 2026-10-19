@@ -1,7 +1,7 @@
 const assert = require("node:assert/strict");
 const { createHash } = require("node:crypto");
 const { createReadStream } = require("node:fs");
-const { mkdir, mkdtemp, readdir, lstat, stat, writeFile, rm } = require("node:fs/promises");
+const { mkdir, mkdtemp, readdir, readFile, lstat, stat, writeFile, rm } = require("node:fs/promises");
 const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { getRawHeader, extractFile } = require("@electron/asar");
@@ -82,6 +82,12 @@ async function main() {
   const plist = join(contents, "Info.plist");
   check("archive and macOS bundle versions match the release", JSON.parse(extractFile(asar, "package.json").toString()).version === pkg.version && run("/usr/libexec/PlistBuddy", ["-c", "Print :CFBundleShortVersionString", plist]) === pkg.version);
   check("macOS bundle identifier is correct", run("/usr/libexec/PlistBuddy", ["-c", "Print :CFBundleIdentifier", plist]) === pkg.build.appId);
+  check("macOS bundle uses the Vexa product name", run("/usr/libexec/PlistBuddy", ["-c", "Print :CFBundleName", plist]) === pkg.build.productName);
+  const iconName = run("/usr/libexec/PlistBuddy", ["-c", "Print :CFBundleIconFile", plist]);
+  check("macOS application icon matches the branded ICNS", await hash(join(resources, iconName.endsWith(".icns") ? iconName : `${iconName}.icns`)) === await hash(join(root, pkg.build.mac.icon)));
+  const brandFiles = ["icon.png", "icon.ico", "trayTemplate.png", "trayTemplate@2x.png"];
+  const brandMatches = await Promise.all(brandFiles.map(async name => extractFile(asar, `resources/branding/${name}`).equals(await readFile(join(root, "resources/branding", name)))));
+  check("packaged application and Retina tray images match the branding sources", brandMatches.every(Boolean));
   const framework = join(contents, "Frameworks/Electron Framework.framework/Versions/A");
   const locales = (await readdir(join(framework, "Resources"))).filter(name => name.endsWith(".lproj")).sort();
   check("English and Simplified Chinese Electron locales are retained", JSON.stringify(locales) === JSON.stringify(["en.lproj", "zh_CN.lproj"]));

@@ -69,8 +69,14 @@ require(${JSON.stringify(join(project,"out/main/index.cjs"))});
   await page.getByRole("button",{name:"创建播放墙",exact:true}).click();
   await until(()=>page.locator(".video-tile video").evaluate(e=>e.currentTime>0&&!e.paused));
   await page.getByRole("button",{name:"切换深色主题",exact:true}).click();
+  if(process.platform==="darwin") await app.evaluate(({BrowserWindow})=>{
+    const window=BrowserWindow.getAllWindows()[0];
+    global.traySmoke.fullscreenReady=false;
+    window.once("enter-full-screen",()=>{global.traySmoke.fullscreenReady=true});
+  });
   await page.getByRole("button",{name:"全屏播放墙",exact:true}).click();
   await until(()=>page.evaluate(()=>!!document.fullscreenElement));
+  if(process.platform==="darwin") await until(()=>app.evaluate(()=>global.traySmoke.fullscreenReady));
   await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].close());
   await until(()=>app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().length===1&&!BrowserWindow.getAllWindows()[0].isVisible()));
   await until(()=>page.locator(".video-tile video").evaluate(e=>e.paused));

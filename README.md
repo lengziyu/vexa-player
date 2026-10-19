@@ -4,15 +4,17 @@
 
 ## 下载安装
 
+**Mac 包已于 2026-10-19 重新构建**，包含最新 Vexa 图标、菜单栏驻留、下载区对齐及多视频控制优化，版本号仍为 0.3.1；此前下载过 Mac 包的用户请重新下载。源码基于 [985d41c](https://github.com/lengziyu/vexa-player/commit/985d41c5d0baa1f4a19d734a4e0e03d9b93a8b14)。
+
 | 系统 / 芯片 | 安装包（v0.3.1） | 说明 |
 | --- | --- | --- |
 | Windows 64 位（x64） | [下载 Windows 安装包](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/Vexa-Player-0.3.1-Windows-x64.exe) | 下载 `.exe` 后运行安装 |
-| macOS · Apple M 系列（Apple Silicon / arm64） | [下载 Mac M 芯片安装包](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/Vexa-Player-0.3.1-macOS-arm64.dmg) | macOS 13.0+，约 128 MiB；打开 `.dmg` 后将应用拖入 Applications |
-| macOS · Intel（x64） | [下载 Mac Intel 安装包](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/Vexa-Player-0.3.1-macOS-x64.dmg) | macOS 13.0+，约 155 MiB；已在 M4 上通过 Rosetta 测试，未做 Intel 真机验收 |
+| macOS · Apple M 系列（Apple Silicon / arm64） | [下载 Mac M 芯片安装包](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/Vexa-Player-0.3.1-macOS-arm64.dmg) | macOS 13.0+，约 128.17 MiB；打开 `.dmg` 后将应用拖入 Applications |
+| macOS · Intel（x64） | [下载 Mac Intel 安装包](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/Vexa-Player-0.3.1-macOS-x64.dmg) | macOS 13.0+，约 155.35 MiB；已在 M4 上通过 Rosetta 测试，未做 Intel 真机验收 |
 
 **Mac 怎么选？** 打开苹果菜单 →「关于本机」，显示「芯片：Apple M…」就选 M 芯片版；显示 Intel 处理器就选 Intel 版。M 系列的不同代际使用同一个 arm64 包，无需分别下载；Intel Mac 不能运行 arm64 包。
 
-[发布页与校验文件](https://github.com/lengziyu/vexa-player/releases/tag/v0.3.1)。当前 macOS 包使用 ad-hoc 签名，未经过 Apple 公证，首次打开互联网下载可能需要 macOS 安全批准。独立检查结果见 [M 芯片版自测说明](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/macOS-arm64-SELF_TEST.txt)和 [Intel 版自测说明](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/macOS-x64-SELF_TEST.txt)；发布页同时提供两版的完整 JSON 记录。Intel 版的登录与系统加密存储测试因钥匙串授权等待而跳过，不能视为该流程已验证。
+[发布页与校验文件](https://github.com/lengziyu/vexa-player/releases/tag/v0.3.1)。当前 macOS 包使用 ad-hoc 签名，未经过 Apple 公证，首次打开互联网下载可能需要 macOS 安全批准。独立检查结果见 [M 芯片版自测说明](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/macOS-arm64-SELF_TEST.txt)和 [Intel 版自测说明](https://github.com/lengziyu/vexa-player/releases/download/v0.3.1/macOS-x64-SELF_TEST.txt)；发布页同时提供两版的完整 JSON 记录。本轮两版均按用户此前选择跳过登录与系统加密存储测试，不沿用旧包结果作为本轮验证。
 
 当前 Windows 安装包约 **127 MiB**，比 v0.2.0 缩小约 **20.4%**，安装后占用减少约 90 MiB，保留离线导入、封面生成和播放能力。体积对比与检查记录见[自测报告](docs/SELF_TEST.md)。
 
