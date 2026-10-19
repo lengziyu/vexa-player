@@ -1,0 +1,76 @@
+{
+  "date": "2026-10-19",
+  "status": "unreleased local source changes after v0.3.1",
+  "baselineExecutable": "release/0.3.1/win-unpacked/Vexa Player.exe",
+  "candidateExecutable": "local Electron production build",
+  "streams": 24,
+  "generatedMedia": "low-complexity 1080P H.264/AAC; independent temporary profile",
+  "scenarios": {
+    "seekInputEvents": 60,
+    "volumeInputEvents": 40
+  },
+  "propertyWrites": {
+    "singleSeek": {
+      "before": 60,
+      "after": 1
+    },
+    "unifiedSeek": {
+      "before": 1464,
+      "after": 24
+    },
+    "volume": {
+      "before": 24000,
+      "after": 960
+    },
+    "playbackRateDuringVolume": {
+      "before": 24000,
+      "after": 0
+    },
+    "loopDuringVolume": {
+      "before": 24000,
+      "after": 0
+    }
+  },
+  "pointer": {
+    "duringDrag": 0,
+    "afterRelease": 1
+  },
+  "unifiedPointer": {
+    "duringDrag": 0,
+    "afterRelease": 24
+  },
+  "continuity": {
+    "sampleSeconds": 1.5,
+    "minimumTimeAdvance": 1.514596000000001,
+    "minimumFramesAdvanced": 45
+  },
+  "checks": {
+    "unit": {
+      "passed": 113,
+      "files": 14
+    },
+    "desktop": 80,
+    "capacity": 12,
+    "seeking": [
+      "single-video drag previews without decoding intermediate targets",
+      "single-video release seeks only its own player once",
+      "24-video drag does not issue intermediate seeks",
+      "release seeks every video exactly once",
+      "every player recovers after unified seeking",
+      "volume drag avoids repeated full-wall property writes",
+      "volume changes leave playback rate and loop properties untouched",
+      "pointer drag waits until release before seeking",
+      "release outside the slider reaches the chosen position once",
+      "unified pointer drag keeps all players playing without intermediate seeks",
+      "unified release outside seeks every player once",
+      "all 24 players continue advancing after repeated control operations",
+      "no renderer errors"
+    ]
+  },
+  "limitations": [
+    "operation counts do not measure equivalent overall playback speedup",
+    "no high-bitrate 4K or long-duration real-library stress claim",
+    "hardware decoding per stream was not verified",
+    "not included in the published v0.3.1 installer"
+  ]
+}

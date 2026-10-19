@@ -12,10 +12,11 @@ const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
 const { getRawHeader, extractFile } = require("@electron/asar");
 const pkg = require("../package.json");
+const { checkWindowsBranding } = require("./check-branding.cjs");
 const root = resolve(__dirname, "..");
 const output = resolve(
   root,
-  pkg.build.directories.output.replaceAll("${version}", pkg.version),
+  process.env.VEXA_PACKAGE_DIR || pkg.build.directories.output.replaceAll("${version}", pkg.version),
 );
 const app = join(output, "win-unpacked");
 const installer = join(output, `Vexa-Player-${pkg.version}-Windows-x64.exe`);
@@ -102,6 +103,11 @@ async function main() {
     JSON.parse(extractFile(asar, "package.json").toString()).version ===
       pkg.version,
   );
+  check("runtime branding and tray icons are packaged", ["icon.png", "icon.ico", "trayTemplate.png", "trayTemplate@2x.png"].every(name=>paths.has(`resources/branding/${name}`)));
+  await checkWindowsBranding(join(app, "Vexa Player.exe"));
+  check("application executable embeds the Vexa product name and icons", true);
+  await checkWindowsBranding(installer);
+  check("installer executable embeds the Vexa product name and icons", true);
   const locales = (await readdir(join(app, "locales"))).sort();
   check(
     "only the supported Electron locales are shipped",

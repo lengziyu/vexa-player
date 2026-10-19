@@ -1149,6 +1149,16 @@ h1 {
 .tile-center-play:active {
   transform: translate(-50%, -50%) scale(0.95) !important;
 }
+/* Many moving surfaces make live backdrop blur expensive; keep the controls legible. */
+:where(.wall-panel.many-streams) :is(.tile-index, .tile-badge, .tile-action, .tile-center-play) {
+  backdrop-filter: none;
+}
+:where(.wall-panel.many-streams) :is(.tile-index, .tile-action, .tile-center-play) {
+  background-color: #1c1725db;
+}
+:where(.wall-panel.many-streams) .tile-badge {
+  background-color: #261c35db;
+}
 .tile-center-play:hover {
   background: #b9a0ee99;
 }

@@ -32,10 +32,12 @@ export class HtmlVideoEngine implements PlayerEngine {
     speed: number;
     loop: boolean;
   }): void {
-    this.element.muted = options.muted;
-    this.element.volume = Math.max(0, Math.min(1, options.volume));
-    this.element.playbackRate = options.speed;
-    this.element.loop = options.loop;
+    const volume = Math.max(0, Math.min(1, options.volume));
+    if (this.element.muted !== options.muted) this.element.muted = options.muted;
+    if (this.element.volume !== volume) this.element.volume = volume;
+    if (this.element.playbackRate !== options.speed)
+      this.element.playbackRate = options.speed;
+    if (this.element.loop !== options.loop) this.element.loop = options.loop;
   }
   destroy(): void {
     this.pause();

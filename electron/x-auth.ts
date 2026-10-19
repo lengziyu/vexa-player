@@ -9,6 +9,7 @@ import {
   XLoginDiagnostics,
 } from "./x-login-policy";
 import type { DownloadSnapshot } from "../src/shared/downloads";
+import { applicationIcon } from "./branding";
 
 export class XAuthentication {
   readonly credentials: XCredentials;
@@ -116,6 +117,7 @@ export class XAuthentication {
     this.diagnostics.clear();
     const popup = new BrowserWindow({
       parent,
+      icon: applicationIcon(),
       width: 560,
       height: 780,
       title: "连接 X · 登录信息仅保存在本机",

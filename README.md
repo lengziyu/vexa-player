@@ -125,6 +125,8 @@ node node_modules/ffmpeg-static/install.js
 
 右上角太阳/月亮一键切换浅色/深色；“偏好设置 → 外观”还可选择跟随系统。主题、强调色、减少动效分别设置。
 
+当前源码支持系统托盘：关闭窗口会暂停视频并收起程序，下载任务继续；点击或双击 Windows 托盘图标可恢复窗口，保持暂停，由你手动播放。右键托盘图标选择“退出 Vexa Player”才会结束程序；有下载任务时会再次提示。Mac 使用菜单栏图标恢复和退出。
+
 | 快捷键 | 操作 |
 | --- | --- |
 | Space | 全部播放/暂停 |
@@ -144,6 +146,8 @@ node node_modules/ffmpeg-static/install.js
 筛选区支持多条件叠加，随机候选选择“当前范围”时沿用相同条件。分辨率按短边计算，例如 1080×1920 归入 1080P。文件“读取正常”表示元信息已读取，实际解码能力仍以播放结果为准。Ctrl/Cmd+A 选择全部匹配视频，当前开发版播放墙最多接收 32 个，超量时保留选择并提示，不截断已有画面。
 
 播放墙底部“双击放大”旁的调节按钮打开小面板：进度按各视频时长的相同百分比跳转，总音量保留单画面的音量和静音选择，统一倍速作用于现有画面并用于之后新加入的画面。单独调整倍速后会显示“不同倍速”。调整进度或倍速不会自动播放已暂停的画面；音量从零调高会解除全局静音。
+
+当前源码优化了多路播放时的调节开销：独立和统一进度条在拖动时预览位置，松开后执行一次跳转，避免连续拖动反复打断解码。独立设置只同步对应播放器，未改变的音量、倍速、静音和循环不重复写入。16 路起自动减少视频控件的背景模糊，保留全部播放画面和操作；这些优化尚未包含在已发布的 v0.3.1 安装包中。
 
 独立与统一倍速均支持 0.5×、0.75×、1×、1.25×、1.5×、2×、3×、5×。数量菜单增加 20、24、28、32 路；从 16 路开始显示轻量资源提示，可主动开启“省资源”，不会弹出确认框或自动暂停。全屏静止时提示随控件隐藏，实际持续掉帧时优先显示测得的掉帧提示。
 
@@ -178,12 +182,15 @@ npm run test:desktop
 npm run test:downloads
 npm run test:x-auth
 npm run test:capacity
+npm run test:seek
 npm run pack
 npm run dist:win
 npm run test:package
 ```
 
 桌面测试使用生成的真实 H.264/AAC 视频与独立临时数据目录，不访问用户的视频库。检查记录输出到 `test-results/desktop-results.json`，截图输出到 `docs/screenshots/`。短时多路测试不代替真实收藏视频与不同显卡上的长期性能验收。
+
+`test:seek` 使用 24 路真实 1080P 播放器，检查连续拖动时不提前跳转、松开后每个目标只跳转一次、浏览器指针在滑块外松开、统一音量不重写其他参数，以及操作后的全部画面继续推进。输出 `test-results/seek-results.json`；`VEXA_SEEK_REPORT` 可指定报告位置，`VEXA_SEEK_ASSERT=0` 仅用于采集旧版对照数据。
 
 `test:downloads` 为显式联网测试：在独立临时目录安装官方组件，解析公开 X 样本并下载、入库和播放；不会访问用户视频库，测试结束清理样本。输出 `test-results/downloads-results.json`。设置 `VEXA_TEST_EXECUTABLE` 可复测安装包内的实际程序；打包结果见[自测报告](docs/SELF_TEST.md)。
 
@@ -192,6 +199,8 @@ Windows 和 macOS 安装包输出到 `release/<版本号>/`。macOS 需要在 Ma
 Apple Silicon 本地测试包可运行 `npm run dist:mac -- --arm64 --publish never --config.mac.identity=-`；这会使用 ad-hoc 签名，不代表已通过 Apple 公证。随后运行 `npm run test:package:mac`，检查 DMG 完整性、挂载复制、嵌套签名、版本、中文资源、许可证及媒体工具架构。检查会把 DMG 内的应用复制到独立的 `.cache/mac-package-audit/` 目录，在 `test-results/package-mac-results.json` 中记录 `installedExecutable`；将其设为 `VEXA_TEST_EXECUTABLE` 即可针对安装包内的实际程序运行桌面、容量、登录、下载与编码测试。
 
 在 M 系列 Mac 上构建 Intel 版时，先切换到 Rosetta 下的 x64 Node.js，并确认 `node -p process.arch` 输出 `x64`，再在独立项目目录中运行 `npm_config_arch=x64 npm ci` 和 `npm_config_arch=x64 npm run dist:mac -- --x64 --publish never --config.mac.identity=-`。包检查与桌面测试也使用同一 x64 环境。Rosetta 测试可以验证 Intel 程序的启动和功能，但不等于 Intel 真机的性能与硬件兼容性验证。交叉构建说明见 [electron-builder 文档](https://www.electron.build/v26/docs/mac/)。
+
+系统图标沿用界面的 Vexa 标志，源文件与 ICO、ICNS、PNG、Mac 托盘模板位于 `resources/branding/`。修改后运行 `npm run icons` 重新导出；打包前会检查资源完整性，安装包检查也会核对可执行文件内的名称与图标。`npm run test:tray` 检查关闭、暂停、托盘恢复、明确退出和下载区对齐。旧安装包需重新构建，代码变更不会自动更新已发布文件。
 
 ## 支持边界
 

@@ -68,5 +68,10 @@ const api: DesktopApi = {
     ipcRenderer.on("privacy:restore", listener);
     return () => ipcRenderer.removeListener("privacy:restore", listener);
   },
+  onPause: (callback) => {
+    const listener = () => callback();
+    ipcRenderer.on("playback:pause", listener);
+    return () => ipcRenderer.removeListener("playback:pause", listener);
+  },
 };
 contextBridge.exposeInMainWorld("vexa", api);

@@ -87,60 +87,71 @@ export const useWall = defineStore("wall", () => {
   }
   function sync(): void {
     applyPauses();
-    for (const tile of tiles.value) {
-      const engine = engines.get(tile.id);
-      if (!engine) continue;
-      engine.configure({
-        muted:
-          privacy.value ||
-          muted.value ||
-          tile.muted ||
-          (!mixedAudio.value && tile.id !== focused.value),
-        volume: tile.volume * volume.value,
-        speed: tile.speed,
-        loop: tile.loop,
-      });
-      if (tile.paused || privacy.value) engine.pause();
-      else if (
-        engine.element.paused &&
-        !(
-          pendingPlay.get(tile.id)?.engine === engine &&
-          pendingPlay.get(tile.id)?.mediaId === tile.media.id
-        )
-      ) {
-        const mediaId = tile.media.id;
-        const task = engine.play();
-        pendingPlay.set(tile.id, { mediaId, engine, task });
-        void task
-          .catch((error) => {
-            if (
-              pendingPlay.get(tile.id)?.task !== task ||
-              engines.get(tile.id) !== engine ||
-              tile.media.id !== mediaId ||
-              tile.status === "error" ||
-              tile.paused
-            )
-              return;
-            if ((error as DOMException).name === "NotAllowedError") {
-              manualPaused.set(tile.id, true);
-              tile.paused = true;
-              tile.status = "paused";
-            } else if (
-              (error as DOMException).name !== "AbortError" &&
-              engine.element.error
-            ) {
-              markError(tile.id, "无法播放此视频，请检查编码或文件状态");
-            }
-          })
-          .finally(() => {
-            if (pendingPlay.get(tile.id)?.task === task)
-              pendingPlay.delete(tile.id);
-          });
-      }
+    for (const tile of tiles.value) syncPlayer(tile);
+  }
+  function syncTile(id: string): void {
+    const tile = tiles.value.find((entry) => entry.id === id);
+    if (tile) syncPlayer(tile);
+  }
+  function syncPlayer(tile: TileState): void {
+    const engine = engines.get(tile.id);
+    if (!engine) return;
+    engine.configure({
+      muted:
+        privacy.value ||
+        muted.value ||
+        tile.muted ||
+        (!mixedAudio.value && tile.id !== focused.value),
+      volume: tile.volume * volume.value,
+      speed: tile.speed,
+      loop: tile.loop,
+    });
+    if (tile.paused || privacy.value) {
+      if (!engine.element.paused) engine.pause();
+    } else if (
+      engine.element.paused &&
+      !(
+        pendingPlay.get(tile.id)?.engine === engine &&
+        pendingPlay.get(tile.id)?.mediaId === tile.media.id
+      )
+    ) {
+      const mediaId = tile.media.id;
+      const task = engine.play();
+      pendingPlay.set(tile.id, { mediaId, engine, task });
+      void task
+        .catch((error) => {
+          if (
+            pendingPlay.get(tile.id)?.task !== task ||
+            engines.get(tile.id) !== engine ||
+            tile.media.id !== mediaId ||
+            tile.status === "error" ||
+            tile.paused
+          )
+            return;
+          if ((error as DOMException).name === "NotAllowedError") {
+            manualPaused.set(tile.id, true);
+            tile.paused = true;
+            tile.status = "paused";
+          } else if (
+            (error as DOMException).name !== "AbortError" &&
+            engine.element.error
+          ) {
+            markError(tile.id, "无法播放此视频，请检查编码或文件状态");
+          }
+        })
+        .finally(() => {
+          if (pendingPlay.get(tile.id)?.task === task)
+            pendingPlay.delete(tile.id);
+        });
     }
   }
   watch(
     () => [
+      muted.value,
+      volume.value,
+      mixedAudio.value,
+      focused.value,
+      privacy.value,
       resourceMode.value,
       zoomed.value,
       settings.values.pauseHidden,
@@ -154,7 +165,8 @@ export const useWall = defineStore("wall", () => {
   }
   function register(id: string, engine: PlayerEngine): void {
     engines.set(id, engine);
-    sync();
+    applyPauses();
+    syncTile(id);
   }
   function unregister(id: string, engine: PlayerEngine): void {
     if (engines.get(id) === engine) engines.delete(id);
@@ -452,6 +464,7 @@ export const useWall = defineStore("wall", () => {
     register,
     unregister,
     sync,
+    syncTile,
     add,
     newWall,
     remove,

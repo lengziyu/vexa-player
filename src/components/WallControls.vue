@@ -20,9 +20,9 @@ const wall = useWall(),
   panel = ref<HTMLElement>(),
   trigger = ref<HTMLButtonElement>(),
   progressInput = ref<HTMLInputElement>(),
-  seekDraft = ref<number | null>(null);
-let observer: ResizeObserver | undefined,
-  seekFrame = 0;
+  seekDraft = ref<number | null>(null),
+  seekDragging = ref(false);
+let observer: ResizeObserver | undefined;
 const reference = computed(
   () =>
     wall.tiles.find(
@@ -68,17 +68,16 @@ function outside(event: PointerEvent): void {
 }
 function seek(event: Event): void {
   seekDraft.value = Number((event.target as HTMLInputElement).value);
-  if (!seekFrame)
-    seekFrame = requestAnimationFrame(() => {
-      seekFrame = 0;
-      if (seekDraft.value !== null) wall.seekPercent(seekDraft.value);
-    });
 }
 function commitSeek(): void {
-  cancelAnimationFrame(seekFrame);
-  seekFrame = 0;
   if (seekDraft.value !== null) wall.seekPercent(seekDraft.value);
   seekDraft.value = null;
+}
+function releaseSeek(event: PointerEvent): void {
+  if (!seekDragging.value) return;
+  seekDragging.value = false;
+  if (event.type === "pointercancel") seekDraft.value = null;
+  else commitSeek();
 }
 watch(
   () => props.open,
@@ -101,11 +100,14 @@ watch(
 onMounted(() => {
   observer = new ResizeObserver(measure);
   document.addEventListener("pointerdown", outside, true);
+  window.addEventListener("pointerup", releaseSeek);
+  window.addEventListener("pointercancel", releaseSeek);
 });
 onBeforeUnmount(() => {
   observer?.disconnect();
   document.removeEventListener("pointerdown", outside, true);
-  cancelAnimationFrame(seekFrame);
+  window.removeEventListener("pointerup", releaseSeek);
+  window.removeEventListener("pointercancel", releaseSeek);
 });
 </script>
 <template>
@@ -163,11 +165,12 @@ onBeforeUnmount(() => {
             :value="percent"
             :disabled="!reference"
             aria-label="统一进度"
-            :aria-valuetext="`${percent.toFixed(1)}%，按各视频时长跳转`"
+            :aria-valuetext="`${percent.toFixed(1)}%，松开后按各视频时长跳转`"
+            title="拖动预览位置，松开后统一跳转"
             :style="{ '--progress': `${percent}%` }"
             @input="seek"
-            @change="commitSeek"
-            @pointercancel="commitSeek"
+            @pointerdown="seekDragging = true"
+            @change="!seekDragging && commitSeek()"
           />
         </div>
         <div class="wall-control-row">
@@ -246,7 +249,7 @@ onBeforeUnmount(() => {
           </div>
         </div>
         <p>
-          进度按各自时长跳转。{{
+          进度松开后跳转。{{
             wall.mixedAudio
               ? "全部画面发声，保留单独静音。"
               : "仅选中画面发声。"

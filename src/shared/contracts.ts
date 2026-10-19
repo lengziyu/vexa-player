@@ -114,6 +114,7 @@ export interface DesktopApi {
   privacyHide(): Promise<void>;
   onScan(callback: (progress: ScanProgress) => void): () => void;
   onPrivacy(callback: () => void): () => void;
+  onPause(callback: () => void): () => void;
 }
 export interface TileState {
   id: string;

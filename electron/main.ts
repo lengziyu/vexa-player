@@ -4,11 +4,13 @@ import {
   clipboard,
   dialog,
   ipcMain,
+  Menu,
   nativeTheme,
   protocol,
   screen,
   session,
   shell,
+  Tray,
   type IpcMainInvokeEvent,
 } from "electron";
 import { Worker } from "node:worker_threads";
@@ -21,7 +23,7 @@ import {
   realpath,
   stat,
 } from "node:fs/promises";
-import { createReadStream } from "node:fs";
+import { createReadStream, mkdirSync } from "node:fs";
 import { Readable } from "node:stream";
 import { createHash } from "node:crypto";
 import { Downloads } from "./downloads";
@@ -39,6 +41,21 @@ import {
 import { validateId, validateSettings } from "../src/shared/validation";
 import { byteRange } from "./range";
 import { validateLibraryQuery } from "../src/shared/library-query";
+import { APP_ID, APP_NAME, applicationIcon, brandAsset, trayIcon } from "./branding";
+
+// Keep the existing data/cache locations when giving Electron its display name.
+const previousDataPath = app.getPath("userData");
+const previousSessionPath = app.getPath("sessionData");
+const dataPath = process.env.VEXA_DATA_DIR
+  ? resolve(process.env.VEXA_DATA_DIR)
+  : previousDataPath;
+const sessionPath = process.env.VEXA_DATA_DIR ? dataPath : previousSessionPath;
+mkdirSync(dataPath, { recursive: true });
+mkdirSync(sessionPath, { recursive: true });
+app.setName(APP_NAME);
+app.setPath("userData", dataPath);
+app.setPath("sessionData", sessionPath);
+if (process.platform === "win32") app.setAppUserModelId(APP_ID);
 
 protocol.registerSchemesAsPrivileged([
   {
@@ -61,6 +78,87 @@ let window: BrowserWindow | null = null,
   xAuthentication: XAuthentication,
   settings: Settings = { ...defaultSettings },
   quitting = false;
+let tray: Tray | null = null,
+  exitPrompt = false,
+  trayHintShown = false;
+
+function restoreWindow(): void {
+  if (!window || window.isDestroyed()) return;
+  if (window.isMinimized()) window.restore();
+  window.show();
+  window.focus();
+}
+
+function hideToTray(): void {
+  if (!window) return;
+  // Mute immediately; the renderer then pauses every player and keeps it paused.
+  window.webContents.setAudioMuted(true);
+  window.webContents.send("playback:pause");
+  window.hide();
+  if (process.platform === "win32" && tray && !trayHintShown) {
+    trayHintShown = true;
+    tray.displayBalloon({
+      title: APP_NAME,
+      content: "已收起到系统托盘。视频已暂停，下载继续；右键图标可退出。",
+      icon: applicationIcon(),
+      iconType: "custom",
+    });
+  }
+}
+
+async function requestQuit(): Promise<void> {
+  if (quitting || exitPrompt) return;
+  exitPrompt = true;
+  if (downloads?.busy) {
+    restoreWindow();
+    const result = await dialog.showMessageBox(window!, {
+      type: "question",
+      title: "还有下载任务正在进行",
+      message: "退出将停止正在进行的下载与解析。",
+      detail: "未完成文件会清理，已完成的视频会保留。关闭窗口可让任务在后台继续。",
+      buttons: ["继续使用", "退出并停止"],
+      defaultId: 0,
+      cancelId: 0,
+    });
+    if (result.response !== 1) {
+      exitPrompt = false;
+      return;
+    }
+  }
+  quitting = true;
+  await Promise.allSettled([
+    xAuthentication?.close(),
+    downloads?.close(),
+    ...(worker
+      ? [Promise.race([rpc("close"), new Promise(r => setTimeout(r, 5000))])]
+      : []),
+  ]);
+  if (worker) void worker.terminate();
+  tray?.destroy();
+  tray = null;
+  app.quit();
+}
+
+function createTray(): void {
+  const image = trayIcon();
+  if (image.isEmpty()) throw new Error("Vexa tray icon is missing");
+  tray = new Tray(image);
+  tray.setToolTip(APP_NAME);
+  tray.setContextMenu(
+    Menu.buildFromTemplate([
+      { id: "show-window", label: `打开 ${APP_NAME}`, click: restoreWindow },
+      { type: "separator" },
+      {
+        id: "quit-app",
+        label: `退出 ${APP_NAME}`,
+        click: () => { void requestQuit(); },
+      },
+    ]),
+  );
+  if (process.platform !== "darwin") tray.on("click", restoreWindow);
+  tray.on("double-click", restoreWindow);
+  tray.on("balloon-click", restoreWindow);
+}
 let settingsWrite = Promise.resolve();
 let requestId = 0;
 const waiting = new Map<
@@ -427,6 +525,7 @@ async function createWindow(): Promise<void> {
     minHeight: 650,
     show: false,
     title: "Vexa Player",
+    icon: applicationIcon(),
     autoHideMenuBar: true,
     backgroundColor: nativeTheme.shouldUseDarkColors ? "#101014" : "#f6f5f9",
     webPreferences: {
@@ -451,30 +550,10 @@ async function createWindow(): Promise<void> {
     window?.webContents.send("privacy:restore");
     window?.webContents.setAudioMuted(false);
   });
-  let closingConfirmed = false,
-    closePrompt = false;
   window.on("close", (event) => {
-    if (!quitting && !closingConfirmed && downloads?.busy) {
+    if (!quitting && tray && !tray.isDestroyed()) {
       event.preventDefault();
-      if (closePrompt) return;
-      closePrompt = true;
-      void dialog
-        .showMessageBox(window!, {
-          type: "question",
-          title: "还有下载任务正在进行",
-          message: "退出将停止正在进行的下载与解析。",
-          detail: "未完成文件会清理，已完成的视频会保留。",
-          buttons: ["继续使用", "退出并停止"],
-          defaultId: 0,
-          cancelId: 0,
-        })
-        .then((result) => {
-          closePrompt = false;
-          if (result.response === 1) {
-            closingConfirmed = true;
-            window?.close();
-          }
-        });
+      hideToTray();
       return;
     }
     void xAuthentication?.close().catch(() => {});
@@ -497,11 +576,7 @@ const instance = app.requestSingleInstanceLock();
 if (!instance) app.quit();
 else {
   app.on("second-instance", () => {
-    if (window) {
-      if (window.isMinimized()) window.restore();
-      window.show();
-      window.focus();
-    }
+    restoreWindow();
   });
   app
     .whenReady()
@@ -509,6 +584,12 @@ else {
       if (process.env.VEXA_DATA_DIR)
         app.setPath("userData", resolve(process.env.VEXA_DATA_DIR));
       await mkdir(app.getPath("userData"), { recursive: true });
+      app.setAboutPanelOptions({
+        applicationName: APP_NAME,
+        applicationVersion: app.getVersion(),
+        iconPath: brandAsset("icon.png"),
+      });
+      if (process.platform === "darwin") app.dock?.setIcon(applicationIcon());
       try {
         settings = {
           ...defaultSettings,
@@ -645,10 +726,10 @@ else {
       await downloads.init();
       registerIpc();
       await createWindow();
+      createTray();
       app.on("activate", () => {
         if (window) {
-          window.show();
-          window.focus();
+          restoreWindow();
         } else void createWindow();
       });
     })
@@ -659,19 +740,11 @@ else {
       );
       app.exit(1);
     });
-  app.on("window-all-closed", () => app.quit());
+  app.on("window-all-closed", () => { if (!tray || quitting) app.quit(); });
   app.on("before-quit", (event) => {
-    if (!quitting && worker) {
+    if (!quitting) {
       event.preventDefault();
-      quitting = true;
-      void Promise.allSettled([
-        xAuthentication?.close(),
-        downloads?.close(),
-        Promise.race([rpc("close"), new Promise((r) => setTimeout(r, 5000))]),
-      ]).finally(() => {
-        void worker.terminate();
-        app.quit();
-      });
+      void requestQuit();
     }
   });
 }

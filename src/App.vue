@@ -63,6 +63,7 @@ const dimensions = ref({ width: 1000, height: 500 }),
 let resizeObserver: ResizeObserver,
   unsubscribe = () => {},
   unsubscribePrivacy = () => {},
+  unsubscribePause = () => {},
   unsubscribeDownloads = () => {},
   toastTimer: ReturnType<typeof setTimeout>,
   searchTimer: ReturnType<typeof setTimeout>,
@@ -592,6 +593,8 @@ onMounted(async () => {
     await library.load();
     unsubscribe = library.subscribe(error);
     unsubscribeDownloads = await downloads.init();
+    unsubscribePause =
+      window.vexa?.onPause(() => wall.toggleAll(false)) || (() => {});
     unsubscribePrivacy =
       window.vexa?.onPrivacy(() => {
         if (wall.privacy) wall.hide();
@@ -616,6 +619,7 @@ onBeforeUnmount(() => {
   resizeObserver?.disconnect();
   unsubscribe();
   unsubscribePrivacy();
+  unsubscribePause();
   unsubscribeDownloads();
   document.removeEventListener("keydown", keyboard);
   document.removeEventListener("keydown", keyboardActivity, true);
@@ -861,6 +865,7 @@ onBeforeUnmount(() => {
               'is-fullscreen': fullscreen,
               'controls-idle': controlsIdle,
               'has-wall-controls': wallControlsOpen,
+              'many-streams': wall.tiles.length >= HIGH_WALL_TILE_COUNT,
             }"
             :style="{ '--wall-controls-height': `${wallControlsHeight}px` }"
             @pointermove="pointerActivity"

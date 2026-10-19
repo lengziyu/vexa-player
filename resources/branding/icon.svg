@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024" fill="none">
+  <defs>
+    <linearGradient id="tile" x1="128" y1="96" x2="896" y2="928" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#30283f"/>
+      <stop offset="1" stop-color="#14121c"/>
+    </linearGradient>
+    <linearGradient id="mark" x1="256" y1="256" x2="736" y2="784" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#d9c5ff"/>
+      <stop offset="1" stop-color="#a58ad8"/>
+    </linearGradient>
+  </defs>
+  <rect x="64" y="64" width="896" height="896" rx="208" fill="url(#tile)"/>
+  <rect x="66" y="66" width="892" height="892" rx="206" stroke="#d3baff" stroke-opacity=".14" stroke-width="4"/>
+  <!-- The same V mark used by the application's sidebar. -->
+  <g transform="translate(192 176) scale(20)">
+    <path d="m5 7 8.5 18a2.8 2.8 0 0 0 5 0L27 7" stroke="#c4a9f5" stroke-width="5" stroke-linecap="round"/>
+    <path d="m17 7 4 8" stroke="#c4a9f5" stroke-width="4" stroke-linecap="round" opacity=".5"/>
+  </g>
+</svg>

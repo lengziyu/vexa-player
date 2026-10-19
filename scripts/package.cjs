@@ -5,6 +5,10 @@ const project = resolve(__dirname, "..");
 // Electron downloads lazily; macOS packaging copies its upstream license files.
 if (process.platform === "darwin") require("electron");
 const builderRoot = dirname(require.resolve("electron-builder/package.json"));
+const branding = spawnSync(process.execPath, [join(project, "scripts/check-branding.cjs")], {
+  cwd: project, stdio: "inherit", windowsHide: true,
+});
+if (branding.status !== 0) process.exit(branding.status ?? 1);
 const result = spawnSync(
   process.execPath,
   [join(builderRoot, "cli.js"), ...process.argv.slice(2)],

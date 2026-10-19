@@ -54,7 +54,7 @@ function metadata(): void {
   props.tile.duration = video.value.duration;
   engine?.seek(props.tile.startAt);
   props.tile.progress = props.tile.startAt;
-  wall.sync();
+  wall.syncTile(props.tile.id);
 }
 function failed(): void {
   const code = video.value?.error?.code;
@@ -70,9 +70,15 @@ function failed(): void {
 function seek(event: Event): void {
   const value = Number((event.target as HTMLInputElement).value);
   seekDraft.value = value;
-  wall.seek(props.tile.id, (value * props.tile.duration) / 100);
 }
-function release(): void {
+function commitSeek(): void {
+  const value = seekDraft.value;
+  if (value === null) return;
+  wall.seek(props.tile.id, (value * props.tile.duration) / 100);
+  seekDraft.value = null;
+}
+function release(event?: Event): void {
+  if (event?.type === "pointerup") commitSeek();
   interacting.value = false;
   seekDraft.value = null;
 }
@@ -80,7 +86,7 @@ function replay(): void {
   wall.retry(props.tile.id);
   monitor.reset();
   video.value?.load();
-  wall.sync();
+  wall.syncTile(props.tile.id);
 }
 function onPlayback(): void {
   if (!wall.privacy && !props.tile.paused) props.tile.status = "playing";
@@ -126,13 +132,8 @@ watch(
     () => props.tile.muted,
     () => props.tile.speed,
     () => props.tile.loop,
-    () => wall.muted,
-    () => wall.volume,
-    () => wall.focused,
-    () => wall.mixedAudio,
-    () => wall.privacy,
   ],
-  () => wall.sync(),
+  () => wall.syncTile(props.tile.id),
 );
 onBeforeUnmount(() => {
   window.removeEventListener("pointerup", release);
@@ -288,7 +289,7 @@ onBeforeUnmount(() => {
           >
         </div>
         <span class="tile-time"
-          >{{ time(tile.progress) }} <em>/ {{ time(tile.duration) }}</em></span
+          >{{ time(seekDraft === null ? tile.progress : seekDraft * tile.duration / 100) }} <em>/ {{ time(tile.duration) }}</em></span
         >
       </div>
       <input
@@ -300,10 +301,11 @@ onBeforeUnmount(() => {
         :value="ratio"
         :disabled="!tile.duration"
         :aria-label="`${tile.media.name}的进度`"
+        title="拖动预览位置，松开后跳转"
         :style="{ '--progress': `${ratio}%` }"
         @click.stop
         @input="seek"
-        @change="seekDraft = null"
+        @change="!interacting && commitSeek()"
       />
       <div class="tile-extra">
         <button

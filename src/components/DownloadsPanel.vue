@@ -625,7 +625,12 @@ function label(task: DownloadTask): string {
 }
 .download-link-row {
   display: flex;
+  align-items: stretch;
   gap: 12px;
+}
+.download-link-row > .button {
+  height: 46px;
+  flex-shrink: 0;
 }
 .download-link {
   flex: 1;
@@ -635,7 +640,8 @@ function label(task: DownloadTask): string {
   gap: 12px;
   border: 1px solid var(--strong-line);
   border-radius: 9px;
-  padding: 4px 12px;
+  height: 46px;
+  padding: 0 12px;
   color: var(--muted);
   background: var(--bg);
 }
@@ -648,13 +654,19 @@ function label(task: DownloadTask): string {
   background: none;
   border: 0;
   color: var(--text);
-  padding: 10px 0;
+  height: 100%;
+  padding: 0;
   outline: none;
   font-size: 13px;
 }
 .download-link .text-button {
   flex-shrink: 0;
   font-size: 12px;
+  align-self: stretch;
+  padding-inline: 4px;
+}
+.download-link-row > .button:hover {
+  transform: none;
 }
 .download-location {
   display: flex;
