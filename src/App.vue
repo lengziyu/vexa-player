@@ -14,19 +14,29 @@ import LibraryFilters from "./components/LibraryFilters.vue";
 import VirtualMediaGrid from "./components/VirtualMediaGrid.vue";
 import MediaCard from "./components/MediaCard.vue";
 import WallControls from "./components/WallControls.vue";
+import DownloadsPanel from "./components/DownloadsPanel.vue";
+import SelectMenu from "./components/SelectMenu.vue";
+import { useDownloads } from "./stores/downloads";
 import { useIdleControls } from "./composables/useIdleControls";
+import { activeSelectMenu } from "./composables/useSelectMenu";
 import { useSettings } from "./stores/settings";
 import { useLibrary } from "./stores/library";
 import { useWall } from "./stores/wall";
 import { calculateLayout } from "./core/layout";
 import type { MediaItem, LayoutMode } from "./shared/contracts";
+import {
+  HIGH_WALL_TILE_COUNT,
+  MAX_WALL_TILES,
+  WALL_TILE_PRESETS,
+} from "./shared/contracts";
 
 const settings = useSettings(),
+  downloads = useDownloads(),
   library = useLibrary(),
   wall = useWall();
 const desktopApi = window.vexa,
   desktop = !!desktopApi,
-  view = ref<"home" | "wall" | "library" | "favorites">("home"),
+  view = ref<"home" | "wall" | "library" | "favorites" | "downloads">("home"),
   modal = ref<"settings" | "import" | "info" | null>(null),
   infoMedia = ref<MediaItem | null>(null),
   ready = ref(false);
@@ -50,26 +60,31 @@ const dimensions = ref({ width: 1000, height: 500 }),
 let resizeObserver: ResizeObserver,
   unsubscribe = () => {},
   unsubscribePrivacy = () => {},
+  unsubscribeDownloads = () => {},
   toastTimer: ReturnType<typeof setTimeout>,
   searchTimer: ReturnType<typeof setTimeout>,
   lastFocus: HTMLElement | null = null;
 const heading = computed(() =>
-  view.value === "home"
-    ? "你的私人放映室"
-    : view.value === "wall"
-      ? "我的视频墙"
-      : view.value === "favorites"
-        ? "我的收藏"
-        : "我的视频库",
+  view.value === "downloads"
+    ? "留住喜欢的片刻"
+    : view.value === "home"
+      ? "你的私人放映室"
+      : view.value === "wall"
+        ? "我的视频墙"
+        : view.value === "favorites"
+          ? "我的收藏"
+          : "我的视频库",
 );
 const subtitle = computed(() =>
-  view.value === "home"
-    ? "为每一个喜欢的瞬间，留一处刚好的空间。"
-    : view.value === "wall"
-      ? "把喜欢的片刻，放在同一个世界。"
-      : view.value === "favorites"
-        ? "反复心动，也是一种浪漫。"
-        : "每一次发现，都值得被好好收藏。",
+  view.value === "downloads"
+    ? "从一条链接，到你的本地收藏。"
+    : view.value === "home"
+      ? "为每一个喜欢的瞬间，留一处刚好的空间。"
+      : view.value === "wall"
+        ? "把喜欢的片刻，放在同一个世界。"
+        : view.value === "favorites"
+          ? "反复心动，也是一种浪漫。"
+          : "每一次发现，都值得被好好收藏。",
 );
 const rects = computed(() =>
   calculateLayout(
@@ -89,10 +104,12 @@ const isLibrary = computed(
   () => view.value === "library" || view.value === "favorites",
 );
 const { idle: controlsIdle, wake: wakeControls } = useIdleControls(
-  () => fullscreen.value && !isLibrary.value && wall.playing && !wall.privacy,
+  () =>
+    fullscreen.value && view.value === "wall" && wall.playing && !wall.privacy,
   () =>
     wallControlsOpen.value ||
     countMenu.value ||
+    !!activeSelectMenu.value ||
     !!modal.value ||
     pointerHeld.value ||
     (keyboardNavigation.value && controlsFocused.value),
@@ -100,6 +117,9 @@ const { idle: controlsIdle, wake: wakeControls } = useIdleControls(
 function pointerActivity(): void {
   keyboardNavigation.value = false;
   wakeControls();
+}
+function keyboardActivity(): void {
+  keyboardNavigation.value = true;
 }
 function pointerStart(): void {
   pointerHeld.value = true;
@@ -279,7 +299,8 @@ async function playSelected(replace = false): Promise<void> {
     if (!wall.focused) return notify("请先在播放墙选择一个画面");
     wall.replace(wall.focused, chosen[0]!);
   } else {
-    if (chosen.length > 16) return notify("最多同时播放 16 个，请减少选择");
+    if (chosen.length > MAX_WALL_TILES)
+      return notify(`最多同时播放 ${MAX_WALL_TILES} 个，请减少选择`);
     if (
       wall.tiles.some((t) => t.locked) &&
       !confirm("创建新墙将结束当前播放，包括锁定的画面。继续吗？")
@@ -435,7 +456,7 @@ function keyboard(event: KeyboardEvent): void {
   if (
     modal.value ||
     (event.target as HTMLElement).closest(
-      'input,textarea,select,[contenteditable="true"]',
+      'input,textarea,select,[role="combobox"],[contenteditable="true"]',
     )
   )
     return;
@@ -516,6 +537,7 @@ onMounted(async () => {
     await settings.init();
     await library.load();
     unsubscribe = library.subscribe(error);
+    unsubscribeDownloads = await downloads.init();
     unsubscribePrivacy =
       window.vexa?.onPrivacy(() => {
         if (wall.privacy) wall.hide();
@@ -530,6 +552,7 @@ onMounted(async () => {
     error(e);
   }
   document.addEventListener("keydown", keyboard);
+  document.addEventListener("keydown", keyboardActivity, true);
   document.addEventListener("fullscreenchange", fullscreenChanged);
   window.addEventListener("pointerup", pointerEnd);
   window.addEventListener("pointercancel", pointerEnd);
@@ -539,7 +562,9 @@ onBeforeUnmount(() => {
   resizeObserver?.disconnect();
   unsubscribe();
   unsubscribePrivacy();
+  unsubscribeDownloads();
   document.removeEventListener("keydown", keyboard);
+  document.removeEventListener("keydown", keyboardActivity, true);
   document.removeEventListener("fullscreenchange", fullscreenChanged);
   window.removeEventListener("pointerup", pointerEnd);
   window.removeEventListener("pointercancel", pointerEnd);
@@ -600,6 +625,17 @@ onBeforeUnmount(() => {
           @click="go('favorites')"
         >
           <Icon name="heart" />我的收藏
+        </button>
+        <button
+          class="nav-item"
+          :class="{ active: view === 'downloads' }"
+          @click="go('downloads')"
+        >
+          <Icon name="download" />下载<span
+            v-if="downloads.pending"
+            class="nav-count"
+            >{{ downloads.pending }}</span
+          >
         </button>
       </nav>
       <div class="nav-caption folder-caption">
@@ -686,7 +722,9 @@ onBeforeUnmount(() => {
               ? view === "favorites"
                 ? "我的收藏"
                 : "视频库"
-              : "播放墙"
+              : view === "downloads"
+                ? "下载"
+                : "播放墙"
           }}</strong
           ><span class="version-tag">EARLY ACCESS</span>
         </div>
@@ -722,9 +760,8 @@ onBeforeUnmount(() => {
             aria-label="隐藏并静音"
             @click="privacyHide"
           >
-            <Icon name="eye" /></button
-          ><span class="topbar-divider"></span
-          ><span class="avatar">V<span></span></span>
+            <Icon name="eye" />
+          </button>
         </div>
       </header>
       <main>
@@ -734,7 +771,7 @@ onBeforeUnmount(() => {
             <h1>{{ heading }}<span class="title-dot">.</span></h1>
             <p>{{ subtitle }}</p>
           </div>
-          <div class="heading-actions">
+          <div v-if="view !== 'downloads'" class="heading-actions">
             <button
               v-if="isLibrary"
               class="button secondary"
@@ -758,7 +795,11 @@ onBeforeUnmount(() => {
         <div v-if="!ready" class="initial-loading">
           <Icon name="loading" :size="26" />正在打开你的放映室…
         </div>
-        <div v-show="!isLibrary && ready" class="view-panel">
+        <DownloadsPanel v-if="ready" v-show="view === 'downloads'" />
+        <div
+          v-show="!isLibrary && view !== 'downloads' && ready"
+          class="view-panel"
+        >
           <section
             ref="panelElement"
             class="wall-panel"
@@ -772,10 +813,7 @@ onBeforeUnmount(() => {
             @pointerenter="pointerActivity"
             @pointerdown.capture="pointerStart"
             @focusin="controlFocus"
-            @focusout="
-              controlsFocused = false;
-              wakeControls();
-            "
+            @focusout="controlsFocused = false"
           >
             <div class="wall-toolbar">
               <div class="layout-switch" role="group" aria-label="布局模式">
@@ -789,10 +827,17 @@ onBeforeUnmount(() => {
                 </button>
               </div>
               <div class="wall-toolbar-right">
-                <select v-model="scope" aria-label="随机来源">
-                  <option value="current">当前筛选</option>
-                  <option value="all">全部视频库</option>
-                </select>
+                <SelectMenu
+                  v-model="scope"
+                  label="随机来源"
+                  compact
+                  :options="
+                    [
+                      { value: 'current', label: '当前筛选' },
+                      { value: 'all', label: '全部视频库' },
+                    ] as const
+                  "
+                />
                 <div class="count-control">
                   <button
                     class="subtle-button"
@@ -808,7 +853,7 @@ onBeforeUnmount(() => {
                     <span>选择画面数量</span>
                     <div>
                       <button
-                        v-for="count in [1, 2, 3, 4, 6, 9, 12, 16]"
+                        v-for="count in WALL_TILE_PRESETS"
                         :key="count"
                         :class="{ selected: wall.tiles.length === count }"
                         @click="setCount(count)"
@@ -816,7 +861,12 @@ onBeforeUnmount(() => {
                         {{ count }}
                       </button>
                     </div>
-                    <small>锁定的画面会被保留</small>
+                    <small
+                      >{{
+                        HIGH_WALL_TILE_COUNT
+                      }}
+                      路起提示资源占用，锁定的画面会被保留</small
+                    >
                   </div>
                 </div>
                 <button
@@ -861,13 +911,25 @@ onBeforeUnmount(() => {
               </div>
             </div>
             <div
-              v-if="strugglingCount && !wall.resourceMode"
+              v-if="
+                !wall.resourceMode &&
+                (strugglingCount || wall.tiles.length >= HIGH_WALL_TILE_COUNT)
+              "
               class="performance-notice"
               role="status"
             >
-              <Icon name="warning" :size="14" /><span
+              <Icon :name="strugglingCount ? 'warning' : 'info'" :size="14" />
+              <span v-if="strugglingCount"
                 >{{ strugglingCount }} 个画面持续掉帧，试试暂停非主画面</span
-              ><button @click="wall.toggleResource()">开启省资源</button>
+              >
+              <span v-else
+                >已开启
+                {{
+                  wall.tiles.length
+                }}
+                个画面，资源占用较高；卡顿时可减少画面或开启省资源。</span
+              >
+              <button @click="wall.toggleResource()">开启省资源</button>
             </div>
             <div
               ref="wallElement"
@@ -1111,7 +1173,7 @@ onBeforeUnmount(() => {
               <div>
                 <span class="intro-icon"><Icon name="wall" :size="22" /></span
                 ><strong>一起看，刚刚好</strong>
-                <p>1～16 个画面，随心排列。</p>
+                <p>1～{{ MAX_WALL_TILES }} 个画面，随心排列。</p>
               </div>
               <div>
                 <span class="intro-icon"
@@ -1141,13 +1203,19 @@ onBeforeUnmount(() => {
               ><span>{{ library.total }} 个视频</span>
             </div>
             <div class="sort-controls">
-              <select v-model="library.sort" aria-label="视频排序">
-                <option value="name">名称</option>
-                <option value="duration">时长</option>
-                <option value="size">文件大小</option>
-                <option value="width">分辨率</option>
-                <option value="path">路径</option></select
-              ><button
+              <SelectMenu
+                v-model="library.sort"
+                label="视频排序"
+                :options="
+                  [
+                    { value: 'name', label: '名称' },
+                    { value: 'duration', label: '时长' },
+                    { value: 'size', label: '文件大小' },
+                    { value: 'width', label: '分辨率' },
+                    { value: 'path', label: '路径' },
+                  ] as const
+                "
+              /><button
                 class="icon-button"
                 aria-label="切换排序方向"
                 @click="
@@ -1226,8 +1294,8 @@ onBeforeUnmount(() => {
           <div v-if="library.selection.size" class="selection-bar">
             <span
               >已选 <strong>{{ library.selection.size }}</strong> 个<span
-                v-if="library.selection.size > 16"
-                >（最多同时播放 16 个）</span
+                v-if="library.selection.size > MAX_WALL_TILES"
+                >（最多同时播放 {{ MAX_WALL_TILES }} 个）</span
               ></span
             ><button class="text-button" @click="library.selection.clear()">
               取消选择</button
@@ -1245,8 +1313,10 @@ onBeforeUnmount(() => {
         <footer class="workspace-footer">
           <span
             ><span class="online-dot"></span
-            >完全离线<span>·</span>你的文件，始终属于你</span
-          ><span>为每一个喜欢的瞬间而造<span class="footer-star">✳</span></span>
+            >本地优先<span>·</span>你的文件，始终属于你</span
+          ><span
+            >为每一个喜欢的瞬间而造<span class="footer-star">✳</span></span
+          >
         </footer>
       </main>
     </div>

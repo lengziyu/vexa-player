@@ -366,7 +366,7 @@ export class Library {
               if (this.task!.cancelled) break;
               const file = join(dir, entry.name);
               if (entry.isDirectory()) {
-                if (recursive) await walk(file);
+                if (recursive && entry.name !== ".vexa-downloads") await walk(file);
               } else if (entry.isFile())
                 await this.discover(file, rootId, seen, pending, seenGlobal);
               else this.task!.skipped++;

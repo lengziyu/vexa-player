@@ -1,4 +1,5 @@
 const { _electron } = require("playwright");
+const { selectOption } = require("./select-menu.cjs");
 const {
   mkdtemp,
   mkdir,
@@ -92,6 +93,22 @@ async function exercisePlaybackControls() {
   const wall = page.locator(".wall-panel"),
     tile = page.locator(".video-tile").first(),
     progress = tile.locator(".tile-progress");
+  await wall.evaluate((el) => {
+    window.__idleTrace = [];
+    const record = (type, target) => {
+      window.__idleTrace.push({
+        time: Math.round(performance.now()), type,
+        target: target?.className, idle: el.classList.contains("controls-idle"),
+        focus: document.activeElement?.className,
+      });
+      if (window.__idleTrace.length > 40) window.__idleTrace.shift();
+    };
+    for (const type of ["pointermove", "pointerenter", "focusin", "focusout"])
+      el.addEventListener(type, (event) => record(type, event.target), true);
+    new MutationObserver(() => record("class", el)).observe(el, {
+      attributes: true, attributeFilter: ["class"],
+    });
+  });
   const resetProgress = () =>
     page.locator('[aria-label="全局百分比跳转"]').evaluate((el) => {
       el.value = "0";
@@ -135,16 +152,19 @@ async function exercisePlaybackControls() {
             "hidden",
       ),
   );
+  // Hiding a previously focused control can cause focusout; it must stay idle.
+  await page.waitForTimeout(500);
+  const idleState = await wall.evaluate((el) => ({
+    toolbar: getComputedStyle(el.querySelector(".wall-toolbar")).visibility,
+    overlay: getComputedStyle(el.querySelector(".tile-bottom")).visibility,
+    cursor: getComputedStyle(el).cursor,
+    trace: window.__idleTrace,
+  }));
   check(
     "fullscreen inactivity hides toolbar, video overlays and cursor",
-    await wall.evaluate(
-      (el) =>
-        getComputedStyle(el.querySelector(".wall-toolbar")).visibility ===
-          "hidden" &&
-        getComputedStyle(el.querySelector(".tile-bottom")).visibility ===
-          "hidden" &&
-        getComputedStyle(el).cursor === "none",
-    ),
+    idleState.toolbar === "hidden" && idleState.overlay === "hidden" &&
+      idleState.cursor === "none",
+    idleState,
   );
   await page.screenshot({
     path: join(screenshots, "fullscreen-idle.png"),
@@ -455,7 +475,50 @@ async function main() {
     () => document.documentElement.dataset.theme === "dark",
   );
   check("system appearance changes apply live", true);
+  await page.getByRole("button", { name: "深色", exact: true }).click();
+  const intervalControl = page.getByRole("combobox", {
+    name: "自动换片间隔",
+    exact: true,
+  });
+  await selectOption(intervalControl, "600");
+  await until(
+    async () =>
+      (await page.evaluate(() => window.vexa.getSettings())).switchInterval ===
+      600,
+  );
+  check(
+    "custom settings menu persists numeric values through desktop IPC",
+    true,
+  );
+  await intervalControl.click();
+  const intervalMenu = page.getByRole("listbox", {
+    name: "自动换片间隔",
+    exact: true,
+  });
+  await intervalMenu.waitFor();
+  await page.screenshot({
+    path: join(screenshots, "select-menu-dark.png"),
+    animations: "disabled",
+  });
+  await intervalControl.press("Escape");
+  check(
+    "Escape dismisses the selection menu while keeping preferences open",
+    (await page
+      .getByRole("button", { name: "关闭弹窗", exact: true })
+      .isVisible()) &&
+      (await intervalControl.evaluate(
+        (control) => control === document.activeElement,
+      )),
+  );
   await page.getByRole("button", { name: "浅色", exact: true }).click();
+  await intervalControl.click();
+  await intervalMenu.waitFor();
+  await page.screenshot({
+    path: join(screenshots, "select-menu-light.png"),
+    animations: "disabled",
+  });
+  await intervalControl.press("Escape");
+  await selectOption(intervalControl, "0");
   await page.getByRole("button", { name: "关闭弹窗" }).click();
   await take("light-welcome.png");
   await app.evaluate(({ dialog }, folder) => {
@@ -505,18 +568,22 @@ async function main() {
     bytes.status === 206 && bytes.length === 32,
     bytes,
   );
-  await page
-    .getByRole("combobox", { name: "按时长筛选", exact: true })
-    .selectOption("short");
-  await page
-    .getByRole("combobox", { name: "按分辨率筛选", exact: true })
-    .selectOption("fhd");
-  await page
-    .getByRole("combobox", { name: "按横竖屏筛选", exact: true })
-    .selectOption("landscape");
-  await page
-    .getByRole("combobox", { name: "按文件状态筛选", exact: true })
-    .selectOption("ready");
+  await selectOption(
+    page.getByRole("combobox", { name: "按时长筛选", exact: true }),
+    "short",
+  );
+  await selectOption(
+    page.getByRole("combobox", { name: "按分辨率筛选", exact: true }),
+    "fhd",
+  );
+  await selectOption(
+    page.getByRole("combobox", { name: "按横竖屏筛选", exact: true }),
+    "landscape",
+  );
+  await selectOption(
+    page.getByRole("combobox", { name: "按文件状态筛选", exact: true }),
+    "ready",
+  );
   await until(
     async () =>
       (await page.locator(".virtual-media-grid").getAttribute("data-total")) ===
@@ -535,9 +602,10 @@ async function main() {
     }),
   );
   await take("light-library.png");
-  await page
-    .getByRole("combobox", { name: "按横竖屏筛选", exact: true })
-    .selectOption("portrait");
+  await selectOption(
+    page.getByRole("combobox", { name: "按横竖屏筛选", exact: true }),
+    "portrait",
+  );
   await page
     .getByRole("heading", { name: "还没有找到这个画面", exact: true })
     .waitFor();
@@ -668,11 +736,13 @@ async function main() {
     .nth(2)
     .getByRole("button", { name: "播放此画面", exact: true })
     .click();
-  await page
-    .locator(".video-tile")
-    .first()
-    .getByRole("combobox", { name: "此画面倍速", exact: true })
-    .selectOption("1.5");
+  await selectOption(
+    page
+      .locator(".video-tile")
+      .first()
+      .getByRole("combobox", { name: "此画面倍速", exact: true }),
+    "1.5",
+  );
   check(
     "independent speed does not alter other streams",
     await page
@@ -683,11 +753,43 @@ async function main() {
           videos.slice(1).every((v) => v.playbackRate === 1),
       ),
   );
-  await page
+  await selectOption(
+    page
+      .locator(".video-tile")
+      .first()
+      .getByRole("combobox", { name: "此画面倍速", exact: true }),
+    "1",
+  );
+  const speedControl = page
     .locator(".video-tile")
     .first()
-    .getByRole("combobox", { name: "此画面倍速", exact: true })
-    .selectOption("1");
+    .getByRole("combobox", { name: "此画面倍速", exact: true });
+  await speedControl.focus();
+  await speedControl.press("ArrowDown");
+  await speedControl.press("Home");
+  await speedControl.press("Enter");
+  check(
+    "custom speed menu keyboard selection changes the actual playback rate",
+    await page
+      .locator(".video-tile video")
+      .first()
+      .evaluate((video) => video.playbackRate === 0.5),
+  );
+  await speedControl.press("ArrowDown");
+  await speedControl.press("End");
+  await speedControl.press("Escape");
+  check(
+    "Escape cancels pending speed selection and keeps focus",
+    (await speedControl.getAttribute("aria-expanded")) === "false" &&
+      (await speedControl.evaluate(
+        (control) => control === document.activeElement,
+      )) &&
+      (await page
+        .locator(".video-tile video")
+        .first()
+        .evaluate((video) => video.playbackRate === 0.5)),
+  );
+  await selectOption(speedControl, "1");
   await page
     .locator(".video-tile")
     .first()
@@ -711,6 +813,32 @@ async function main() {
       .locator(".wall-panel")
       .evaluate((el) => el.classList.contains("is-fullscreen")),
   );
+  await page.locator(".video-tile").first().hover();
+  await speedControl.click();
+  const speedMenu = page.getByRole("listbox", {
+    name: "此画面倍速",
+    exact: true,
+  });
+  await speedMenu.waitFor();
+  check(
+    "custom dropdown stays inside the fullscreen element and has no native select",
+    (await speedMenu.evaluate((menu) =>
+      document.fullscreenElement.contains(menu),
+    )) && (await page.locator("select").count()) === 0,
+  );
+  await page.waitForTimeout(3100);
+  check(
+    "open speed menu keeps fullscreen controls visible",
+    (await speedMenu.isVisible()) &&
+      (await page
+        .locator(".wall-panel")
+        .evaluate((wall) => !wall.classList.contains("controls-idle"))),
+  );
+  await page.screenshot({
+    path: join(screenshots, "fullscreen-speed-menu.png"),
+    animations: "disabled",
+  });
+  await speedControl.press("Escape");
   await exercisePlaybackControls();
   const leftBefore = await page
     .locator(".video-tile")
@@ -1024,15 +1152,18 @@ async function main() {
   check("select all includes the complete filtered library", true);
   await page.getByRole("button", { name: "取消选择", exact: true }).click();
   await page.evaluate(() => window.scrollTo(0, 0));
-  await page
-    .getByRole("combobox", { name: "按分辨率筛选", exact: true })
-    .selectOption("fhd");
-  await page
-    .getByRole("combobox", { name: "按横竖屏筛选", exact: true })
-    .selectOption("portrait");
-  await page
-    .getByRole("combobox", { name: "按文件状态筛选", exact: true })
-    .selectOption("missing");
+  await selectOption(
+    page.getByRole("combobox", { name: "按分辨率筛选", exact: true }),
+    "fhd",
+  );
+  await selectOption(
+    page.getByRole("combobox", { name: "按横竖屏筛选", exact: true }),
+    "portrait",
+  );
+  await selectOption(
+    page.getByRole("combobox", { name: "按文件状态筛选", exact: true }),
+    "missing",
+  );
   await until(
     async () =>
       (await page.locator(".virtual-media-grid").getAttribute("data-total")) ===

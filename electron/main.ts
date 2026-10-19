@@ -1,6 +1,7 @@
 import {
   app,
   BrowserWindow,
+  clipboard,
   dialog,
   ipcMain,
   nativeTheme,
@@ -22,6 +23,10 @@ import {
 } from "node:fs/promises";
 import { createReadStream } from "node:fs";
 import { Readable } from "node:stream";
+import { createHash } from "node:crypto";
+import { Downloads } from "./downloads";
+import { DownloadNetwork } from "./download-network";
+import { XAuthentication } from "./x-auth";
 import ffmpegPath from "ffmpeg-static";
 import ffprobe from "@ffprobe-installer/ffprobe";
 import {
@@ -52,6 +57,8 @@ protocol.registerSchemesAsPrivileged([
 ]);
 let window: BrowserWindow | null = null,
   worker: Worker,
+  downloads: Downloads,
+  xAuthentication: XAuthentication,
   settings: Settings = { ...defaultSettings },
   quitting = false;
 let settingsWrite = Promise.resolve();
@@ -213,6 +220,72 @@ async function registerProtocols(): Promise<void> {
   });
 }
 function registerIpc(): void {
+  const requireAuthIdle = () => {
+    if (downloads.busy)
+      throw new Error("请先等待当前解析或下载结束，再修改 X 登录状态");
+  };
+  handle("downloads:connect-x", () => {
+    requireAuthIdle();
+    return xAuthentication.connect(window!, downloads.snapshot().preferences);
+  });
+  handle("downloads:x-browser", () =>
+    shell.openExternal("https://x.com/i/flow/login"),
+  );
+  handle("downloads:import-x-login", async () => {
+    requireAuthIdle();
+    const result = await dialog.showOpenDialog(window!, {
+      title: "选择已登录 X 的 Cookie 文件（仅在本机使用）",
+      properties: ["openFile"],
+      filters: [
+        { name: "Netscape Cookie 文件", extensions: ["txt", "cookies"] },
+      ],
+    });
+    if (!result.canceled && result.filePaths[0]) {
+      requireAuthIdle();
+      await xAuthentication.importFile(result.filePaths[0]);
+    }
+  });
+  handle("downloads:disconnect-x", () => {
+    requireAuthIdle();
+    return xAuthentication.disconnect();
+  });
+  handle("downloads:snapshot", () => downloads.snapshot());
+  handle("downloads:install", () => downloads.install());
+  handle("downloads:engine-source", () =>
+    shell.openExternal(
+      "https://github.com/yt-dlp/yt-dlp/releases/tag/2026.08.19",
+    ),
+  );
+  handle("downloads:import-engine", async () => {
+    const result = await dialog.showOpenDialog(window!, {
+      title: "选择官方 yt-dlp 2026.08.19 下载组件",
+      properties: ["openFile"],
+    });
+    if (!result.canceled && result.filePaths[0])
+      await downloads.importEngine(result.filePaths[0]);
+  });
+  handle("downloads:directory", async () => {
+    const result = await dialog.showOpenDialog(window!, {
+      title: "选择视频下载保存位置",
+      properties: ["openDirectory", "createDirectory"],
+    });
+    if (result.canceled || !result.filePaths[0]) return null;
+    await downloads.setDirectory(result.filePaths[0]);
+    return downloads.snapshot().preferences.directory;
+  });
+  handle("downloads:configure", (input) => downloads.configure(input));
+  handle("downloads:paste", async () =>
+    (await clipboard.readText()).slice(0, 2048),
+  );
+  handle("downloads:parse", (input) => downloads.parse(input));
+  handle("downloads:enqueue", (input) => downloads.enqueue(input));
+  handle("downloads:cancel", (id) => downloads.cancel(id));
+  handle("downloads:retry", (id) => downloads.retry(id));
+  handle("downloads:reveal", async (id) =>
+    shell.showItemInFolder(await downloads.completedFile(id)),
+  );
+  handle("downloads:import", (id) => downloads.importFile(id));
+  handle("downloads:clear", () => downloads.clearFinished());
   handle("appearance:get", () => nativeTheme.shouldUseDarkColors);
   handle("settings:get", () => settings);
   handle("settings:set", async (patch) => {
@@ -378,7 +451,33 @@ async function createWindow(): Promise<void> {
     window?.webContents.send("privacy:restore");
     window?.webContents.setAudioMuted(false);
   });
-  window.on("close", () => {
+  let closingConfirmed = false,
+    closePrompt = false;
+  window.on("close", (event) => {
+    if (!quitting && !closingConfirmed && downloads?.busy) {
+      event.preventDefault();
+      if (closePrompt) return;
+      closePrompt = true;
+      void dialog
+        .showMessageBox(window!, {
+          type: "question",
+          title: "还有下载任务正在进行",
+          message: "退出将停止正在进行的下载与解析。",
+          detail: "未完成文件会清理，已完成的视频会保留。",
+          buttons: ["继续使用", "退出并停止"],
+          defaultId: 0,
+          cancelId: 0,
+        })
+        .then((result) => {
+          closePrompt = false;
+          if (result.response === 1) {
+            closingConfirmed = true;
+            window?.close();
+          }
+        });
+      return;
+    }
+    void xAuthentication?.close().catch(() => {});
     if (window) {
       const rect = window.getNormalBounds();
       void atomicJson(join(app.getPath("userData"), "window.json"), rect).catch(
@@ -503,6 +602,47 @@ else {
         });
       });
       await registerProtocols();
+      const downloadNetwork = new DownloadNetwork();
+      xAuthentication = new XAuthentication(() => {
+        if (
+          downloads &&
+          window &&
+          !window.isDestroyed() &&
+          !window.webContents.isDestroyed()
+        )
+          window?.webContents.send("downloads:changed", downloads.snapshot());
+      }, app.getPath("userData"));
+      await xAuthentication.init();
+      downloads = new Downloads({
+        dataDir: app.getPath("userData"),
+        authentication: () => xAuthentication.state(),
+        withCookies: (callback) =>
+          xAuthentication.credentials.withCookies(callback),
+        licensesDir: join(app.getAppPath(), "docs/licenses"),
+        ffmpegPath: ffmpegPath ? unpacked(ffmpegPath) : null,
+        ffprobePath: unpacked(ffprobe.path),
+        fetch: (url, preferences, signal) =>
+          downloadNetwork.fetch(url, preferences, signal),
+        proxy: (preferences) => downloadNetwork.proxy(preferences),
+        changed: (snapshot) =>
+          window?.webContents.send("downloads:changed", snapshot),
+        importFile: async (file) => {
+          await rpc("scan", { paths: [file], recursive: false });
+          const id = createHash("sha256")
+            .update(process.platform === "win32" ? file.toLowerCase() : file)
+            .digest("hex")
+            .slice(0, 32);
+          const deadline = Date.now() + 45000;
+          while (!quitting && Date.now() < deadline) {
+            const media = await rpc<MediaItem | null>("getMedia", id);
+            if (media?.status === "ready") return;
+            if (media?.status === "error" || media?.status === "missing") break;
+            await new Promise((resolve) => setTimeout(resolve, 250));
+          }
+          throw new Error("入库未完成");
+        },
+      });
+      await downloads.init();
       registerIpc();
       await createWindow();
       app.on("activate", () => {
@@ -524,9 +664,10 @@ else {
     if (!quitting && worker) {
       event.preventDefault();
       quitting = true;
-      void Promise.race([
-        rpc("close"),
-        new Promise((r) => setTimeout(r, 5000)),
+      void Promise.allSettled([
+        xAuthentication?.close(),
+        downloads?.close(),
+        Promise.race([rpc("close"), new Promise((r) => setTimeout(r, 5000))]),
       ]).finally(() => {
         void worker.terminate();
         app.quit();

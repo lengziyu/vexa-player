@@ -1,6 +1,6 @@
 {
   "name": "vexa-player",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "description": "A private, offline desktop video wall player",
@@ -9,11 +9,15 @@
   "main": "out/main/index.cjs",
   "scripts": {
     "dev": "electron-vite dev",
+    "test:local": "node scripts/start-local.cjs",
     "preview": "electron-vite preview",
     "dev:web": "vite --config vite.web.config.ts --host 127.0.0.1",
     "typecheck": "vue-tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:desktop": "npm run build && node scripts/desktop-smoke.cjs",
+    "test:downloads": "npm run build && node scripts/downloads-smoke.cjs",
+    "test:x-auth": "npm run build && node scripts/x-auth-smoke.cjs",
+    "test:capacity": "npm run build && node scripts/capacity-smoke.cjs",
     "test:package": "node scripts/check-package.cjs",
     "build": "npm run typecheck && electron-vite build",
     "pack": "npm run build && node scripts/package.cjs --dir",

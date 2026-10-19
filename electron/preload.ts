@@ -2,9 +2,38 @@ import { contextBridge, ipcRenderer, webUtils } from "electron";
 import type { DesktopApi, ScanProgress } from "../src/shared/contracts";
 
 const api: DesktopApi = {
+  downloads: {
+    connectX: () => ipcRenderer.invoke("downloads:connect-x"),
+    openXInBrowser: () => ipcRenderer.invoke("downloads:x-browser"),
+    importXLogin: () => ipcRenderer.invoke("downloads:import-x-login"),
+    disconnectX: () => ipcRenderer.invoke("downloads:disconnect-x"),
+    snapshot: () => ipcRenderer.invoke("downloads:snapshot"),
+    installEngine: () => ipcRenderer.invoke("downloads:install"),
+    importEngine: () => ipcRenderer.invoke("downloads:import-engine"),
+    openEngineSource: () => ipcRenderer.invoke("downloads:engine-source"),
+    chooseDirectory: () => ipcRenderer.invoke("downloads:directory"),
+    configure: (input) => ipcRenderer.invoke("downloads:configure", input),
+    paste: () => ipcRenderer.invoke("downloads:paste"),
+    parse: (url) => ipcRenderer.invoke("downloads:parse", url),
+    enqueue: (input) => ipcRenderer.invoke("downloads:enqueue", input),
+    cancel: (id) => ipcRenderer.invoke("downloads:cancel", id),
+    retry: (id) => ipcRenderer.invoke("downloads:retry", id),
+    reveal: (id) => ipcRenderer.invoke("downloads:reveal", id),
+    importFile: (id) => ipcRenderer.invoke("downloads:import", id),
+    clearFinished: () => ipcRenderer.invoke("downloads:clear"),
+    onChange: (callback) => {
+      const listener = (
+        _event: Electron.IpcRendererEvent,
+        snapshot: import("../src/shared/downloads").DownloadSnapshot,
+      ) => callback(snapshot);
+      ipcRenderer.on("downloads:changed", listener);
+      return () => ipcRenderer.removeListener("downloads:changed", listener);
+    },
+  },
   getSystemDark: () => ipcRenderer.invoke("appearance:get"),
   onAppearance: (callback) => {
-    const listener = (_event: Electron.IpcRendererEvent, dark: boolean) => callback(dark);
+    const listener = (_event: Electron.IpcRendererEvent, dark: boolean) =>
+      callback(dark);
     ipcRenderer.on("appearance:changed", listener);
     return () => ipcRenderer.removeListener("appearance:changed", listener);
   },

@@ -6,6 +6,7 @@ import { HtmlVideoEngine } from "../player/engine";
 import { useWall } from "../stores/wall";
 import { useSettings } from "../stores/settings";
 import Icon from "./Icon.vue";
+import SelectMenu from "./SelectMenu.vue";
 import { PlaybackQualityMonitor } from "../core/playback-quality";
 const props = defineProps<{
   tile: TileState;
@@ -26,6 +27,10 @@ const wall = useWall(),
 let engine: HtmlVideoEngine | undefined;
 let monitorTimer: ReturnType<typeof setInterval> | undefined;
 const monitor = new PlaybackQualityMonitor();
+const speedOptions = PLAYBACK_SPEEDS.map((speed) => ({
+  value: speed,
+  label: `${speed}×`,
+}));
 const source = computed(() => `vexa-media://media/${props.tile.media.id}`);
 const ratio = computed(
   () =>
@@ -305,15 +310,14 @@ onBeforeUnmount(() => {
           v-model.number="tile.volume"
           aria-label="此画面音量"
           @click.stop
-        /><select
-          v-model.number="tile.speed"
-          aria-label="此画面倍速"
-          @click.stop
-        >
-          <option v-for="speed in PLAYBACK_SPEEDS" :key="speed" :value="speed">
-            {{ speed }}×
-          </option></select
-        ><button
+        /><SelectMenu
+          v-model="tile.speed"
+          :options="speedOptions"
+          label="此画面倍速"
+          class="tile-speed-select"
+          compact
+          video
+        /><button
           :aria-pressed="tile.loop"
           title="单片循环"
           aria-label="单片循环"

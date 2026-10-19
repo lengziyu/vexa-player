@@ -2,7 +2,12 @@ export type ThemeMode = "dark" | "light" | "system";
 export type Accent = "violet" | "sage" | "sand";
 export type LayoutMode = "smart" | "focus" | "grid";
 export type ThumbnailSize = "small" | "medium" | "large";
-export const PLAYBACK_SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
+export const PLAYBACK_SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 2, 3, 5] as const;
+export const MAX_WALL_TILES = 32;
+export const HIGH_WALL_TILE_COUNT = 16;
+export const WALL_TILE_PRESETS = [
+  1, 2, 3, 4, 6, 9, 12, 16, 20, 24, 28, 32,
+] as const;
 export type ResolutionFilter = "all" | "sd" | "hd" | "fhd" | "qhd" | "uhd";
 export type OrientationFilter = "all" | "landscape" | "portrait" | "square";
 export interface Settings {
@@ -88,6 +93,7 @@ export interface ScanRequest {
   recursive: boolean;
 }
 export interface DesktopApi {
+  downloads: import("./downloads").DownloadApi;
   getSystemDark(): Promise<boolean>;
   onAppearance(callback: (dark: boolean) => void): () => void;
   getSettings(): Promise<Settings>;

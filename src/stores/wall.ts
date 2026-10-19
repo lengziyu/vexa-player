@@ -1,7 +1,7 @@
 import { defineStore } from "pinia";
 import { computed, ref, watch } from "vue";
 import type { MediaItem, TileState } from "../shared/contracts";
-import { PLAYBACK_SPEEDS } from "../shared/contracts";
+import { MAX_WALL_TILES, PLAYBACK_SPEEDS } from "../shared/contracts";
 import type { PlayerEngine } from "../player/engine";
 import { chooseRandom, randomStart } from "../core/random";
 import { useSettings } from "./settings";
@@ -153,17 +153,20 @@ export const useWall = defineStore("wall", () => {
     engine.destroy();
   }
   function add(media: MediaItem): string | null {
-    if (tiles.value.length >= 16) return "最多同时播放 16 个画面";
+    if (tiles.value.length >= MAX_WALL_TILES)
+      return `最多同时播放 ${MAX_WALL_TILES} 个画面`;
     tiles.value.push(create(media, pausedByAll.value || privacy.value));
     focused.value ??= tiles.value[0]!.id;
     return null;
   }
   function newWall(media: MediaItem[]): void {
+    if (media.length > MAX_WALL_TILES)
+      throw new Error(`最多同时播放 ${MAX_WALL_TILES} 个画面，请减少选择`);
     manualPaused.clear();
     quality.value = {};
     pendingPlay.clear();
     resourceMode.value = false;
-    tiles.value = media.slice(0, 16).map((m) => create(m, privacy.value));
+    tiles.value = media.map((m) => create(m, privacy.value));
     focused.value = tiles.value[0]?.id ?? null;
     zoomed.value = null;
     pausedByAll.value = false;
@@ -273,6 +276,8 @@ export const useWall = defineStore("wall", () => {
     return replaced;
   }
   function resize(amount: number, pool: MediaItem[]): number {
+    if (!Number.isInteger(amount) || amount < 1 || amount > MAX_WALL_TILES)
+      throw new Error(`画面数量应为 1～${MAX_WALL_TILES} 个`);
     if (tiles.value.filter((t) => t.locked).length > amount)
       throw new Error("请先解锁需要关闭的画面");
     while (tiles.value.length > amount) {

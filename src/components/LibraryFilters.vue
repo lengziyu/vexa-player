@@ -3,6 +3,7 @@ import { computed } from "vue";
 import { useLibrary } from "../stores/library";
 import { useSettings } from "../stores/settings";
 import Icon from "./Icon.vue";
+import SelectMenu from "./SelectMenu.vue";
 const library = useLibrary(),
   settings = useSettings();
 const emit = defineEmits<{ error: [error: unknown] }>();
@@ -45,50 +46,61 @@ const activeCount = computed(
     </div>
     <div class="filter-controls">
       <label
-        >时长<select v-model="library.filters.duration" aria-label="按时长筛选">
-          <option value="all">全部时长</option>
-          <option value="short">10 分钟以内</option>
-          <option value="medium">10–30 分钟</option>
-          <option value="long">30–60 分钟</option>
-          <option value="feature">60 分钟以上</option>
-        </select></label
-      >
+        >时长<SelectMenu
+          v-model="library.filters.duration"
+          label="按时长筛选"
+          :options="
+            [
+              { value: 'all', label: '全部时长' },
+              { value: 'short', label: '10 分钟以内' },
+              { value: 'medium', label: '10–30 分钟' },
+              { value: 'long', label: '30–60 分钟' },
+              { value: 'feature', label: '60 分钟以上' },
+            ] as const
+          "
+      /></label>
       <label
-        >画质<select
+        >画质<SelectMenu
           v-model="library.filters.resolution"
-          aria-label="按分辨率筛选"
-        >
-          <option value="all">全部分辨率</option>
-          <option value="sd">低于 720P</option>
-          <option value="hd">720P</option>
-          <option value="fhd">1080P</option>
-          <option value="qhd">1440P</option>
-          <option value="uhd">4K 及以上</option>
-        </select></label
-      >
+          label="按分辨率筛选"
+          :options="
+            [
+              { value: 'all', label: '全部分辨率' },
+              { value: 'sd', label: '低于 720P' },
+              { value: 'hd', label: '720P' },
+              { value: 'fhd', label: '1080P' },
+              { value: 'qhd', label: '1440P' },
+              { value: 'uhd', label: '4K 及以上' },
+            ] as const
+          "
+      /></label>
       <label
-        >画幅<select
+        >画幅<SelectMenu
           v-model="library.filters.orientation"
-          aria-label="按横竖屏筛选"
-        >
-          <option value="all">全部画幅</option>
-          <option value="landscape">横屏</option>
-          <option value="portrait">竖屏</option>
-          <option value="square">方形</option>
-        </select></label
-      >
+          label="按横竖屏筛选"
+          :options="
+            [
+              { value: 'all', label: '全部画幅' },
+              { value: 'landscape', label: '横屏' },
+              { value: 'portrait', label: '竖屏' },
+              { value: 'square', label: '方形' },
+            ] as const
+          "
+      /></label>
       <label
-        >文件<select
+        >文件<SelectMenu
           v-model="library.filters.status"
-          aria-label="按文件状态筛选"
-        >
-          <option value="all">全部状态</option>
-          <option value="ready">读取正常</option>
-          <option value="pending">待读取</option>
-          <option value="missing">文件失联</option>
-          <option value="error">读取失败</option>
-        </select></label
-      >
+          label="按文件状态筛选"
+          :options="
+            [
+              { value: 'all', label: '全部状态' },
+              { value: 'ready', label: '读取正常' },
+              { value: 'pending', label: '待读取' },
+              { value: 'missing', label: '文件失联' },
+              { value: 'error', label: '读取失败' },
+            ] as const
+          "
+      /></label>
       <button
         class="filter-favorite"
         :class="{ active: library.favorites || library.filters.onlyFavorites }"

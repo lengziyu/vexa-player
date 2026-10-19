@@ -194,4 +194,12 @@ describe("real library pipeline", () => {
       await new Promise<void>((resolve) => server.close(() => resolve()));
     }
   });
+  it("excludes incomplete downloads when recursively scanning their parent folder", async () => {
+    const partial = join(source, ".vexa-downloads", "task");
+    await mkdir(partial, { recursive: true });
+    await writeFile(join(partial, "unfinished.mp4"), await readFile(join(source, "one.mp4")));
+    await scan([source]);
+    expect(library.query({ search: "unfinished" }).total).toBe(0);
+    expect(library.query({ search: "one.mp4" }).total).toBe(1);
+  });
 });

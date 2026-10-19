@@ -1,18 +1,25 @@
 {
   "date": "2026-10-19",
-  "version": "0.2.2",
-  "testedExecutable": "release/0.2.2/win-unpacked/Vexa Player.exe",
+  "version": "0.3.0",
+  "testedExecutable": "release/0.3.0/win-unpacked/Vexa Player.exe",
+  "typecheck": {
+    "success": true
+  },
+  "build": {
+    "success": true
+  },
   "unitTests": {
-    "passed": 54,
-    "files": 10
+    "passed": 100,
+    "files": 13
   },
   "audit": {
-    "reportedVulnerabilities": 0
+    "reportedVulnerabilities": 0,
+    "scope": "npm dependencies; native binaries not audited"
   },
   "installer": {
-    "bytes": 133191769,
-    "path": "release/0.2.2/Vexa-Player-0.2.2-Windows-x64.exe",
-    "sha256": "d64038d543daf2326d04a8c241b56146a2f14a43d33b789c93b7b7a860ac060f"
+    "bytes": 133233677,
+    "path": "release/0.3.0/Vexa-Player-0.3.0-Windows-x64.exe",
+    "sha256": "be4998d491b677717a1eca254a0107d1a65473acc02b3dde6f59cd0f7b61eeae"
   },
   "packaging": {
     "success": true,
@@ -21,6 +28,10 @@
       "unused SQL distributions and zip archives are excluded",
       "renderer dependencies are bundled instead of duplicated",
       "renderer and third-party licenses are retained",
+      "optional downloader license notices are retained",
+      "test data and saved account sessions are excluded",
+      "optional downloader executable is not bundled",
+      "packaged app version matches the release",
       "only the supported Electron locales are shipped",
       "runtime codec, rendering fallback and legal files are retained",
       "FFmpeg and FFprobe match the previously used binaries",
@@ -34,15 +45,15 @@
       "locales": 55
     },
     "current": {
-      "version": "0.2.2",
-      "installerBytes": 133191769,
-      "installerSha256": "d64038d543daf2326d04a8c241b56146a2f14a43d33b789c93b7b7a860ac060f",
-      "installedBytes": 502433660,
-      "asarBytes": 1589154,
+      "version": "0.3.0",
+      "installerBytes": 133233677,
+      "installerSha256": "be4998d491b677717a1eca254a0107d1a65473acc02b3dde6f59cd0f7b61eeae",
+      "installedBytes": 502814673,
+      "asarBytes": 1970167,
       "locales": 2
     },
-    "savedInstallerBytes": 34264166,
-    "savedInstallerPercent": 20.461601435625443,
+    "savedInstallerBytes": 34222258,
+    "savedInstallerPercent": 20.436575150352244,
     "media": [
       {
         "path": "ffmpeg-static/ffmpeg.exe",
@@ -66,6 +77,14 @@
       },
       {
         "name": "system appearance changes apply live",
+        "passed": true
+      },
+      {
+        "name": "custom settings menu persists numeric values through desktop IPC",
+        "passed": true
+      },
+      {
+        "name": "Escape dismisses the selection menu while keeping preferences open",
         "passed": true
       },
       {
@@ -191,6 +210,14 @@
         "passed": true
       },
       {
+        "name": "custom speed menu keyboard selection changes the actual playback rate",
+        "passed": true
+      },
+      {
+        "name": "Escape cancels pending speed selection and keeps focus",
+        "passed": true
+      },
+      {
         "name": "only focus stream is audible",
         "passed": true
       },
@@ -199,12 +226,25 @@
         "passed": true
       },
       {
+        "name": "custom dropdown stays inside the fullscreen element and has no native select",
+        "passed": true
+      },
+      {
+        "name": "open speed menu keeps fullscreen controls visible",
+        "passed": true
+      },
+      {
         "name": "fullscreen timeline has a larger hover track and drag target",
         "passed": true
       },
       {
         "name": "fullscreen inactivity hides toolbar, video overlays and cursor",
-        "passed": true
+        "passed": true,
+        "detail": {
+          "toolbar": "hidden",
+          "overlay": "hidden",
+          "cursor": "none"
+        }
       },
       {
         "name": "mouse movement immediately restores fullscreen controls",
@@ -220,7 +260,7 @@
         "detail": {
           "below": true,
           "width": 334,
-          "height": 276.296875,
+          "height": 310.296875,
           "bottom": 1417,
           "viewport": 1440,
           "inside": true
@@ -375,7 +415,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.972763,
+            "currentTime": 3.976954,
             "paused": false,
             "error": null,
             "frames": 119,
@@ -384,7 +424,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.972784,
+            "currentTime": 3.976995,
             "paused": false,
             "error": null,
             "frames": 119,
@@ -393,7 +433,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.972769,
+            "currentTime": 3.976959,
             "paused": false,
             "error": null,
             "frames": 119,
@@ -402,10 +442,10 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.970794,
+            "currentTime": 3.976951,
             "paused": false,
             "error": null,
-            "frames": 120,
+            "frames": 119,
             "dropped": 0
           }
         ]
@@ -418,7 +458,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.978477,
+            "currentTime": 3.974738,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -427,7 +467,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.978524,
+            "currentTime": 3.974788,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -436,7 +476,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.978463,
+            "currentTime": 3.974678,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -445,7 +485,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.978388,
+            "currentTime": 3.973832,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -454,7 +494,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.978347,
+            "currentTime": 3.973822,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -463,7 +503,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.978325,
+            "currentTime": 3.973815,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -472,7 +512,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.978192,
+            "currentTime": 3.97381,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -481,7 +521,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.978149,
+            "currentTime": 3.973798,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -490,7 +530,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.978124,
+            "currentTime": 3.973793,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -506,7 +546,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.991333,
+            "currentTime": 3.987314,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -515,7 +555,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.991386,
+            "currentTime": 3.987342,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -524,7 +564,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.99137,
+            "currentTime": 3.987325,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -533,7 +573,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.991365,
+            "currentTime": 3.987317,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -542,7 +582,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.991347,
+            "currentTime": 3.987291,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -551,7 +591,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.991342,
+            "currentTime": 3.987284,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -560,7 +600,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.991337,
+            "currentTime": 3.987254,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -569,7 +609,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.991329,
+            "currentTime": 3.987242,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -578,16 +618,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.991221,
-            "paused": false,
-            "error": null,
-            "frames": 120,
-            "dropped": 0
-          },
-          {
-            "width": 1921,
-            "height": 1080,
-            "currentTime": 3.991215,
+            "currentTime": 3.987203,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -596,7 +627,25 @@
           {
             "width": 1920,
             "height": 1080,
-            "currentTime": 3.991182,
+            "currentTime": 3.987111,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.987056,
+            "paused": false,
+            "error": null,
+            "frames": 120,
+            "dropped": 0
+          },
+          {
+            "width": 1921,
+            "height": 1080,
+            "currentTime": 3.987013,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -605,7 +654,7 @@
           {
             "width": 1920,
             "height": 1080,
-            "currentTime": 3.991176,
+            "currentTime": 3.986999,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -614,7 +663,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.991157,
+            "currentTime": 3.98699,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -623,7 +672,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.991151,
+            "currentTime": 3.986912,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -632,16 +681,7 @@
           {
             "width": 1921,
             "height": 1080,
-            "currentTime": 3.991132,
-            "paused": false,
-            "error": null,
-            "frames": 120,
-            "dropped": 0
-          },
-          {
-            "width": 1921,
-            "height": 1080,
-            "currentTime": 3.991083,
+            "currentTime": 3.986356,
             "paused": false,
             "error": null,
             "frames": 120,
@@ -688,9 +728,355 @@
         "electron": "44.9.0",
         "chrome": "152.0.7977.167"
       },
-      "version": "0.2.2"
+      "version": "0.3.0"
     },
     "success": true
+  },
+  "capacity": {
+    "checks": [
+      "33 selected videos are rejected without losing the selection",
+      "32 selected files create 32 independent players",
+      "many videos show a nonblocking resource hint",
+      "32 actual 1080p players advance without decode errors",
+      "resource hint action pauses all 31 non-main streams",
+      "restoring resources resumes the previously playing streams",
+      "count presets grow from 24 to 32 without duplicate media",
+      "single-player 3× reaches the actual player without resuming pause",
+      "single-player 5× reaches the actual player without resuming pause",
+      "unified 3× reaches the actual player",
+      "unified 5× reaches the actual player",
+      "no renderer exceptions"
+    ],
+    "errors": [],
+    "performance": {
+      "streams": 32,
+      "seconds": 4,
+      "syntheticLowComplexity": true,
+      "stats": [
+        {
+          "time": 3.608075,
+          "paused": false,
+          "error": null,
+          "frames": 109,
+          "dropped": 4,
+          "advancedFrames": 99
+        },
+        {
+          "time": 3.659586,
+          "paused": false,
+          "error": null,
+          "frames": 112,
+          "dropped": 2,
+          "advancedFrames": 102
+        },
+        {
+          "time": 3.670732,
+          "paused": false,
+          "error": null,
+          "frames": 112,
+          "dropped": 3,
+          "advancedFrames": 102
+        },
+        {
+          "time": 3.684453,
+          "paused": false,
+          "error": null,
+          "frames": 112,
+          "dropped": 4,
+          "advancedFrames": 102
+        },
+        {
+          "time": 3.64456,
+          "paused": false,
+          "error": null,
+          "frames": 111,
+          "dropped": 3,
+          "advancedFrames": 101
+        },
+        {
+          "time": 3.644509,
+          "paused": false,
+          "error": null,
+          "frames": 111,
+          "dropped": 3,
+          "advancedFrames": 101
+        },
+        {
+          "time": 3.660064,
+          "paused": false,
+          "error": null,
+          "frames": 111,
+          "dropped": 1,
+          "advancedFrames": 101
+        },
+        {
+          "time": 3.504471,
+          "paused": false,
+          "error": null,
+          "frames": 109,
+          "dropped": 32,
+          "advancedFrames": 105
+        },
+        {
+          "time": 3.780246,
+          "paused": false,
+          "error": null,
+          "frames": 114,
+          "dropped": 8,
+          "advancedFrames": 104
+        },
+        {
+          "time": 3.486696,
+          "paused": false,
+          "error": null,
+          "frames": 108,
+          "dropped": 33,
+          "advancedFrames": 104
+        },
+        {
+          "time": 3.473769,
+          "paused": false,
+          "error": null,
+          "frames": 108,
+          "dropped": 28,
+          "advancedFrames": 104
+        },
+        {
+          "time": 3.486351,
+          "paused": false,
+          "error": null,
+          "frames": 113,
+          "dropped": 36,
+          "advancedFrames": 105
+        },
+        {
+          "time": 3.468747,
+          "paused": false,
+          "error": null,
+          "frames": 109,
+          "dropped": 35,
+          "advancedFrames": 105
+        },
+        {
+          "time": 3.644498,
+          "paused": false,
+          "error": null,
+          "frames": 110,
+          "dropped": 0,
+          "advancedFrames": 100
+        },
+        {
+          "time": 3.614772,
+          "paused": false,
+          "error": null,
+          "frames": 109,
+          "dropped": 2,
+          "advancedFrames": 99
+        },
+        {
+          "time": 3.472735,
+          "paused": false,
+          "error": null,
+          "frames": 112,
+          "dropped": 40,
+          "advancedFrames": 105
+        },
+        {
+          "time": 3.426763,
+          "paused": false,
+          "error": null,
+          "frames": 106,
+          "dropped": 29,
+          "advancedFrames": 102
+        },
+        {
+          "time": 3.606722,
+          "paused": false,
+          "error": null,
+          "frames": 108,
+          "dropped": 0,
+          "advancedFrames": 98
+        },
+        {
+          "time": 3.41275,
+          "paused": false,
+          "error": null,
+          "frames": 106,
+          "dropped": 30,
+          "advancedFrames": 102
+        },
+        {
+          "time": 3.386756,
+          "paused": false,
+          "error": null,
+          "frames": 106,
+          "dropped": 27,
+          "advancedFrames": 102
+        },
+        {
+          "time": 3.60675,
+          "paused": false,
+          "error": null,
+          "frames": 108,
+          "dropped": 0,
+          "advancedFrames": 98
+        },
+        {
+          "time": 3.354761,
+          "paused": false,
+          "error": null,
+          "frames": 106,
+          "dropped": 28,
+          "advancedFrames": 102
+        },
+        {
+          "time": 3.714843,
+          "paused": false,
+          "error": null,
+          "frames": 111,
+          "dropped": 2,
+          "advancedFrames": 101
+        },
+        {
+          "time": 3.344573,
+          "paused": false,
+          "error": null,
+          "frames": 106,
+          "dropped": 27,
+          "advancedFrames": 102
+        },
+        {
+          "time": 3.606749,
+          "paused": false,
+          "error": null,
+          "frames": 108,
+          "dropped": 2,
+          "advancedFrames": 98
+        },
+        {
+          "time": 3.330762,
+          "paused": false,
+          "error": null,
+          "frames": 106,
+          "dropped": 25,
+          "advancedFrames": 102
+        },
+        {
+          "time": 3.34456,
+          "paused": false,
+          "error": null,
+          "frames": 106,
+          "dropped": 30,
+          "advancedFrames": 102
+        },
+        {
+          "time": 3.304481,
+          "paused": false,
+          "error": null,
+          "frames": 105,
+          "dropped": 26,
+          "advancedFrames": 101
+        },
+        {
+          "time": 3.330753,
+          "paused": false,
+          "error": null,
+          "frames": 105,
+          "dropped": 32,
+          "advancedFrames": 101
+        },
+        {
+          "time": 3.274779,
+          "paused": false,
+          "error": null,
+          "frames": 105,
+          "dropped": 29,
+          "advancedFrames": 101
+        },
+        {
+          "time": 3.301749,
+          "paused": false,
+          "error": null,
+          "frames": 105,
+          "dropped": 34,
+          "advancedFrames": 101
+        },
+        {
+          "time": 3.274766,
+          "paused": false,
+          "error": null,
+          "frames": 105,
+          "dropped": 33,
+          "advancedFrames": 101
+        }
+      ]
+    },
+    "minimumAdvancedFrames": 98,
+    "cumulativeDroppedFrames": 588
+  },
+  "xAuth": {
+    "checks": [
+      "X authorization starts disconnected",
+      "local app has no account avatar or automatic X login window",
+      "optional login explains access limits and account-session privacy",
+      "login opens in a small nonmodal panel within the viewport",
+      "clicking outside closes the popover without blocking the link field",
+      "Escape closes the login panel and restores the trigger focus",
+      "the login popover follows the light theme",
+      "popover fits a small desktop window without horizontal overflow",
+      "explicit local cookie import connects X",
+      "real OS encryption keeps tokens out of the persisted file",
+      "renderer snapshots contain no credentials",
+      "authorization restores locally without browser account access",
+      "disconnect clears the encrypted session",
+      "login uses a separate sandbox without preload or Node",
+      "challenge subframe follows its official redirect",
+      "official Google and Apple sign-in scripts load inside the login session",
+      "login navigator keeps the actual Chromium version without app branding",
+      "top-level third-party navigation is blocked while the X page remains usable",
+      "arbitrary external top-level navigation is blocked",
+      "HTTP failures publish status-only diagnostics without URL parameters",
+      "diagnostic feedback is visible in the downloads page",
+      "browser fallback opens only the fixed official X login address",
+      "login completion saves authorization and closes its own window",
+      "synthetic login state is fully removed",
+      "application exit closes a login page even if it vetoes ordinary close",
+      "no renderer exceptions"
+    ],
+    "errors": [],
+    "credentials": "synthetic only; no real account login performed"
+  },
+  "downloads": {
+    "date": "2026-10-19T02:19:20.833Z",
+    "source": "https://x.com/BrooklynNets/status/1349794411333394432",
+    "checks": [
+      "download navigation and initial empty state",
+      "component is opt-in and absent on first launch",
+      "download directory and connection settings persist",
+      "official optional engine downloaded and checksum-verified",
+      "unsupported host rejected through desktop IPC",
+      "real X post parsed into video and qualities",
+      "actual X video downloaded and automatically indexed",
+      "downloaded file has playable video and preserved audio",
+      "forged preview cannot download arbitrary content",
+      "completed download searchable in the local library",
+      "downloaded X video actually decodes and plays in the wall",
+      "real multi-video post preserves the explicitly selected video",
+      "narrow download page has no horizontal overflow",
+      "selected second video downloads and indexes independently",
+      "clearing task history preserves the downloaded file",
+      "no renderer exceptions"
+    ],
+    "errors": [],
+    "media": {
+      "size": 2664147,
+      "duration": "324.501333",
+      "codecs": [
+        "h264",
+        "aac"
+      ],
+      "height": 270
+    }
   },
   "codecs": {
     "success": true,
@@ -702,7 +1088,7 @@
         "playing": true,
         "width": 320,
         "height": 180,
-        "currentTime": 1.665175,
+        "currentTime": 1.655378,
         "error": null,
         "visibleError": null
       },
@@ -711,7 +1097,7 @@
         "playing": true,
         "width": 320,
         "height": 180,
-        "currentTime": 1.657147,
+        "currentTime": 1.650397,
         "error": null,
         "visibleError": null
       },
@@ -720,7 +1106,7 @@
         "playing": true,
         "width": 320,
         "height": 180,
-        "currentTime": 1.660407,
+        "currentTime": 1.641373,
         "error": null,
         "visibleError": null
       },
@@ -729,7 +1115,7 @@
         "playing": true,
         "width": 320,
         "height": 180,
-        "currentTime": 1.60317,
+        "currentTime": 1.59943,
         "error": null,
         "visibleError": null
       },
@@ -747,10 +1133,17 @@
         "playing": true,
         "width": 320,
         "height": 180,
-        "currentTime": 1.670884,
+        "currentTime": 1.663432,
         "error": null,
         "visibleError": null
       }
     ]
-  }
+  },
+  "unverified": [
+    "actual installer install and uninstall",
+    "official code signing",
+    "real X account login and restricted posts",
+    "macOS and other GPUs",
+    "long-running high-bitrate 32-stream playback"
+  ]
 }

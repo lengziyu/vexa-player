@@ -37,7 +37,7 @@ export const useLibrary = defineStore("library", () => {
   const search = ref(""),
     rootId = ref(""),
     favorites = ref(false),
-    sort = ref<LibraryQuery["sort"]>("name"),
+    sort = ref<NonNullable<LibraryQuery["sort"]>>("name"),
     direction = ref<"asc" | "desc">("asc"),
     selection = ref(new Map<string, MediaItem>()),
     filters = reactive(emptyFilters());

@@ -49,6 +49,59 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 describe("playback resource controls", () => {
+  it("accepts 32 tiles and refuses overflow without changing the existing wall", () => {
+    const w = useWall();
+    const pool = Array.from({ length: 33 }, (_, i) => ({
+      ...media("a"),
+      id: i.toString(16).padStart(32, "0"),
+    }));
+    w.newWall(pool.slice(0, 32));
+    expect(w.tiles).toHaveLength(32);
+    w.toggleAll(false);
+    const ids = w.tiles.map((tile) => tile.id);
+    expect(w.add(pool[32]!)).toContain("32");
+    expect(() => w.newWall(pool)).toThrow("32");
+    expect(w.tiles.map((tile) => tile.id)).toEqual(ids);
+    expect(w.tiles.every((tile) => tile.paused)).toBe(true);
+  });
+  it("resizes to 32 distinct candidates, validates the count and preserves locked tiles", () => {
+    const w = useWall();
+    const pool = Array.from({ length: 40 }, (_, i) => ({
+      ...media("a"),
+      id: i.toString(16).padStart(32, "0"),
+    }));
+    w.newWall(pool.slice(0, 3));
+    const first = w.tiles[0]!;
+    first.locked = true;
+    for (const amount of [33, Infinity, NaN, 0, -1, 1.5])
+      expect(() => w.resize(amount, pool)).toThrow();
+    expect(w.tiles).toHaveLength(3);
+    expect(w.resize(32, pool)).toBe(32);
+    expect(new Set(w.tiles.map((tile) => tile.media.id)).size).toBe(32);
+    expect(w.resize(24, pool)).toBe(24);
+    expect(w.tiles[0]!.id).toBe(first.id);
+    expect(w.tiles[0]!.locked).toBe(true);
+    w.newWall(pool.slice(0, 24));
+    expect(w.resize(32, pool.slice(0, 24))).toBe(24);
+  });
+  it("applies 3× and 5× to engines and new tiles while preserving pause state", () => {
+    const w = useWall();
+    w.newWall([media("a")]);
+    const e = engine();
+    w.register(w.tiles[0]!.id, e);
+    w.toggleAll(false);
+    for (const speed of [3, 5]) {
+      w.setSpeed(speed);
+      expect(e.configure).toHaveBeenLastCalledWith(
+        expect.objectContaining({ speed }),
+      );
+      expect(w.tiles[0]!.paused).toBe(true);
+    }
+    w.add(media("b"));
+    expect(w.tiles.every((tile) => tile.speed === 5 && tile.paused)).toBe(true);
+    w.setSpeed(4);
+    expect(w.tiles.every((tile) => tile.speed === 5)).toBe(true);
+  });
   it("applies percentage seeking to different durations while preserving pause and lock state", () => {
     const w = useWall();
     w.newWall([media("a"), { ...media("b"), duration: 120 }]);

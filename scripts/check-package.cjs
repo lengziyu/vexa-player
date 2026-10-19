@@ -10,7 +10,7 @@ const {
 } = require("node:fs/promises");
 const { join, resolve } = require("node:path");
 const { spawnSync } = require("node:child_process");
-const { getRawHeader } = require("@electron/asar");
+const { getRawHeader, extractFile } = require("@electron/asar");
 const pkg = require("../package.json");
 const root = resolve(__dirname, "..");
 const output = resolve(
@@ -78,6 +78,29 @@ async function main() {
     ["Vue-MIT.txt", "Pinia-MIT.txt", "GPL-3.0.txt"].every((name) =>
       paths.has(`docs/licenses/${name}`),
     ),
+  );
+  check(
+    "optional downloader license notices are retained",
+    ["yt-dlp-LICENSE", "yt-dlp-THIRD_PARTY_LICENSES.txt"].every((name) =>
+      paths.has(`docs/licenses/${name}`),
+    ),
+  );
+  check(
+    "test data and saved account sessions are excluded",
+    !files.some(({ path }) =>
+      /(^|\/)(?:\.cache|test-results|download-engine|x-auth)(\/|$)|(^|\/)(?:session\.bin|cookies-[0-9a-f-]+\.txt)$/.test(
+        path,
+      ),
+    ),
+  );
+  check(
+    "optional downloader executable is not bundled",
+    !files.some(({ path }) => /(^|\/)yt-dlp(?:\.exe|_macos)?$/.test(path)),
+  );
+  check(
+    "packaged app version matches the release",
+    JSON.parse(extractFile(asar, "package.json").toString()).version ===
+      pkg.version,
   );
   const locales = (await readdir(join(app, "locales"))).sort();
   check(

@@ -4,6 +4,7 @@ import { useSettings } from "../stores/settings";
 import { useWall } from "../stores/wall";
 import type { Settings } from "../shared/contracts";
 import Icon from "./Icon.vue";
+import SelectMenu from "./SelectMenu.vue";
 const emit = defineEmits<{
   error: [error: unknown];
   notify: [message: string];
@@ -174,21 +175,20 @@ onMounted(() => {
       <strong>定时邂逅下一幕</strong>
       <p>只累计播放时间，暂停时停止计时</p>
     </div>
-    <select
-      :value="settings.values.switchInterval"
-      aria-label="自动换片间隔"
-      @change="
-        change({
-          switchInterval: Number(($event.target as HTMLSelectElement).value),
-        })
+    <SelectMenu
+      :model-value="settings.values.switchInterval"
+      label="自动换片间隔"
+      :options="
+        [
+          { value: 0, label: '关闭' },
+          { value: 30, label: '30 秒' },
+          { value: 60, label: '1 分钟' },
+          { value: 300, label: '5 分钟' },
+          { value: 600, label: '10 分钟' },
+        ] as const
       "
-    >
-      <option :value="0">关闭</option>
-      <option :value="30">30 秒</option>
-      <option :value="60">1 分钟</option>
-      <option :value="300">5 分钟</option>
-      <option :value="600">10 分钟</option>
-    </select>
+      @update:model-value="change({ switchInterval: $event })"
+    />
   </div>
   <div class="setting-row">
     <div>

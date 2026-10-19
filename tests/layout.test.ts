@@ -10,8 +10,8 @@ describe("layout geometry", () => {
       [900, 500],
       [1, 1],
     ]) {
-      it(`${mode} partitions 1–16 mixed-aspect videos inside ${width}×${height}`, () => {
-        for (let n = 1; n <= 16; n++) {
+      it(`${mode} partitions 1–32 mixed-aspect videos inside ${width}×${height}`, () => {
+        for (let n = 1; n <= 32; n++) {
           const input = Array.from({ length: n }, (_, i) => ({
             id: String(i),
             aspect: i % 3 === 0 ? 9 / 16 : 16 / 9,
