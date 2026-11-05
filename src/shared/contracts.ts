@@ -93,6 +93,7 @@ export interface ScanRequest {
   recursive: boolean;
 }
 export interface DesktopApi {
+  wallHistory: import('./wall-history').WallHistoryApi;
   downloads: import("./downloads").DownloadApi;
   getSystemDark(): Promise<boolean>;
   onAppearance(callback: (dark: boolean) => void): () => void;

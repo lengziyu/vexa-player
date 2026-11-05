@@ -57,6 +57,33 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 describe("paged library state", () => {
+  it('commits rectangular selections across unloaded pages and supports additive selection', async () => {
+    const l = useLibrary(); await l.load();
+    l.select(records[2]!);
+    await l.selectIndices([98, 101, 302, 304, 1801]);
+    expect([...l.selection.values()].map(item => item.name)).toEqual(['98.mp4', '101.mp4', '302.mp4', '304.mp4', '1801.mp4']);
+    await l.selectIndices([5, 1801], true);
+    expect(l.selection.size).toBe(6);
+    expect(l.selection.has(records[5]!.id)).toBe(true);
+    await l.selectIndices([]);
+    expect(l.selection.size).toBe(0);
+  });
+  it('does not commit an old drag selection after the filter changes mid-request', async () => {
+    const l = useLibrary(); await l.load(); l.select(records[1]!);
+    let finish!: (value: { total: number; items: MediaItem[] }) => void;
+    query.mockImplementationOnce(() => new Promise(resolve => finish = resolve));
+    const task = l.selectIndices([2999]);
+    l.search = '1.mp4';
+    finish({ total: 3000, items: [records[2999]!] });
+    await expect(task).rejects.toThrow('列表已变化');
+    expect([...l.selection.keys()]).toEqual([records[1]!.id]);
+  });
+  it('rejects a drag started while the old filtered page is still displayed', async () => {
+    const l = useLibrary(); await l.load(); l.select(records[1]!);
+    l.search = '2.mp4';
+    await expect(l.selectIndices([0, 1])).rejects.toThrow('列表已变化');
+    expect([...l.selection.keys()]).toEqual([records[1]!.id]);
+  });
   it("loads visible ranges beyond the first page with bounded cache", async () => {
     const l = useLibrary();
     await l.load();

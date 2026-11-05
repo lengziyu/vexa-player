@@ -1,6 +1,27 @@
 # README 演示素材
 
-本目录保存 v0.3.0 Windows 实际程序的界面截图与操作录屏，使用独立临时应用目录和演示视频库，不包含用户的媒体、账号或登录信息。
+本目录保存 v0.3.1 macOS 最新安装包的全屏操作视频，以及 v0.3.0 Windows 实际程序的早期截图和录屏。均使用独立临时应用目录和演示视频库，不包含用户的媒体、账号或登录信息。
+
+## 最新 Mac 全屏演示
+
+- [`vexa-fullscreen-macos-0.3.1.mp4`](vexa-fullscreen-macos-0.3.1.mp4)：1 分 20 秒，1080P、30fps，中文字幕与点击提示，无音轨。
+- `vexa-fullscreen-macos-0.3.1.webp`：同一视频的封面。
+- `vexa-fullscreen-macos-0.3.1.chapters.json`：各操作章节的开始时间，单位为秒。
+
+本次使用最新 arm64 DMG 中的实际应用（运行时代码 `985d41c`）录制。全程保持播放墙全屏，依次展示网格 / 主次切换、双击放大与恢复、搜索指定换片、添加视频、移出与撤销、随机换片、拖动交换、统一进度、音量与发声范围、统一倍速、暂停与继续、六画面，以及控件隐藏和唤醒。演示素材无声音，音量章节展示真实控件操作及发声范围切换。
+
+录制使用 1280×720 的实际应用视口，输出为 1920×1080；中文字幕位于界面外，不遮挡按钮。鼠标和点击光圈仅为录屏提示。每个关键操作均检查实际播放器状态及全屏状态，成片另做完整解码检查；30fps 是成片编码帧率，不是性能测试结论。
+
+重新生成时，显式指定从最新 DMG 安装或提取的应用：
+
+```sh
+VEXA_TEST_EXECUTABLE="/path/to/Vexa Player.app/Contents/MacOS/Vexa Player" \
+  node scripts/capture-fullscreen-walkthrough.cjs
+```
+
+脚本使用 `.cache/fullscreen-walkthrough-*` 中的独立资料，保留原始录制帧以便再次剪辑；报告位于 `test-results/fullscreen-walkthrough-results.json`。不会访问用户日常资料、登录或钥匙串。
+
+## 早期 Windows 演示
 
 - `wall-dark.webp`、`wall-light.webp`：深色、浅色播放墙。
 - `library-light.webp`：视频库、缩略图和筛选。

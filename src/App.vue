@@ -15,6 +15,7 @@ import VirtualMediaGrid from "./components/VirtualMediaGrid.vue";
 import MediaCard from "./components/MediaCard.vue";
 import WallControls from "./components/WallControls.vue";
 import WallMediaDrawer from "./components/WallMediaDrawer.vue";
+import WallHistoryPanel from './components/WallHistoryPanel.vue';
 import DownloadsPanel from "./components/DownloadsPanel.vue";
 import SelectMenu from "./components/SelectMenu.vue";
 import { useDownloads } from "./stores/downloads";
@@ -53,6 +54,7 @@ const toastMessage = ref(""),
   fullscreen = ref(false),
   wallControlsOpen = ref(false),
   wallPickerOpen = ref(false),
+  historyOpen = ref(false),
   pickerTarget = ref<string | null>(null),
   wallControlsHeight = ref(264),
   pointerHeld = ref(false),
@@ -69,6 +71,7 @@ let resizeObserver: ResizeObserver,
   searchTimer: ReturnType<typeof setTimeout>,
   lastFocus: HTMLElement | null = null;
 let pickerFocus: HTMLElement | null = null;
+let historyFocus: HTMLElement | null = null;
 const heading = computed(() =>
   view.value === "downloads"
     ? "留住喜欢的片刻"
@@ -117,6 +120,7 @@ const { idle: controlsIdle, wake: wakeControls } = useIdleControls(
   () =>
     wallControlsOpen.value ||
     wallPickerOpen.value ||
+    historyOpen.value ||
     countMenu.value ||
     !!activeSelectMenu.value ||
     !!modal.value ||
@@ -274,6 +278,7 @@ async function pool(): Promise<MediaItem[]> {
   return library.candidates(scope.value);
 }
 function openPicker(id: string | null = null): void {
+  historyOpen.value = false;
   if (!wallPickerOpen.value) pickerFocus = document.activeElement as HTMLElement;
   pickerTarget.value = id;
   wallPickerOpen.value = true;
@@ -290,6 +295,28 @@ function closePicker(): void {
       : panelElement.value?.querySelector<HTMLButtonElement>(".wall-add-button");
     target?.focus({ preventScroll: true });
   });
+}
+async function openHistory(): Promise<void> {
+  historyFocus = document.activeElement as HTMLElement;
+  await go('wall');
+  wallPickerOpen.value = false;
+  wallControlsOpen.value = false;
+  countMenu.value = false;
+  historyOpen.value = true;
+  wakeControls();
+  await wall.saveHistory();
+}
+function closeHistory(): void {
+  historyOpen.value = false;
+  void nextTick(() => {
+    const target = fullscreen.value ? panelElement.value?.querySelector<HTMLButtonElement>('.wall-history-trigger') : historyFocus;
+    target?.focus({ preventScroll: true });
+  });
+}
+function historyRestored(message: string | null): void {
+  closeHistory();
+  notify(message || '已恢复播放墙和上次进度');
+  void pool().then(media => wall.randomPool = media).catch(error);
 }
 function chooseForWall(media: MediaItem): void {
   if (media.status === "missing" || media.status === "error") return;
@@ -394,6 +421,7 @@ async function toggleFullscreen(): Promise<void> {
   }
 }
 async function privacyHide(): Promise<void> {
+  historyOpen.value = false;
   closeModal();
   wallPickerOpen.value = false;
   pickerTarget.value = null;
@@ -498,6 +526,7 @@ function keyboard(event: KeyboardEvent): void {
   }
   if (event.key === "Escape") {
     if (modal.value) closeModal();
+    else if (historyOpen.value) closeHistory();
     else if (wallPickerOpen.value) closePicker();
     else if (wallControlsOpen.value) wallControlsOpen.value = false;
     else if (countMenu.value) countMenu.value = false;
@@ -583,6 +612,7 @@ watch(countMenu, (open) => {
 watch([view, modal], () => {
   if (isLibrary.value || modal.value) wallControlsOpen.value = false;
   if (modal.value || (view.value !== "wall" && view.value !== "home")) {
+    historyOpen.value = false;
     wallPickerOpen.value = false;
     pickerTarget.value = null;
   }
@@ -590,6 +620,7 @@ watch([view, modal], () => {
 onMounted(async () => {
   try {
     await settings.init();
+    await wall.initHistory();
     await library.load();
     unsubscribe = library.subscribe(error);
     unsubscribeDownloads = await downloads.init();
@@ -609,13 +640,16 @@ onMounted(async () => {
     error(e);
   }
   document.addEventListener("keydown", keyboard);
+  window.addEventListener('beforeunload', saveWallHistory);
   document.addEventListener("keydown", keyboardActivity, true);
   document.addEventListener("fullscreenchange", fullscreenChanged);
   window.addEventListener("pointerup", pointerEnd);
   window.addEventListener("pointercancel", pointerEnd);
   window.addEventListener("blur", pointerEnd);
 });
+function saveWallHistory(): void { void wall.saveHistory(); }
 onBeforeUnmount(() => {
+  window.removeEventListener('beforeunload', saveWallHistory);
   resizeObserver?.disconnect();
   unsubscribe();
   unsubscribePrivacy();
@@ -695,6 +729,7 @@ onBeforeUnmount(() => {
             >{{ downloads.pending }}</span
           >
         </button>
+        <button class="nav-item" :class="{ active: historyOpen }" @click="openHistory"><Icon name="history" />播放墙历史</button>
       </nav>
       <div class="nav-caption folder-caption">
         我的文件夹<button
@@ -886,6 +921,7 @@ onBeforeUnmount(() => {
                 </button>
               </div>
               <div class="wall-toolbar-right">
+                <button class="wall-add-button wall-history-trigger" aria-label="打开播放墙历史" :aria-expanded="historyOpen" @click="openHistory"><Icon name="history" :size="14" />历史</button>
                 <button
                   class="wall-add-button"
                   aria-label="播放中添加视频"
@@ -1073,7 +1109,7 @@ onBeforeUnmount(() => {
                     :size="13"
                   /></button
                 ><span class="welcome-privacy"
-                  ><Icon name="shield" :size="13" />完全离线 · 不记录观看历史 ·
+                  ><Icon name="shield" :size="13" />完全离线 · 历史仅存本机 ·
                   不修改原文件</span
                 >
               </div>
@@ -1109,6 +1145,9 @@ onBeforeUnmount(() => {
                 />
               </div>
             </div>
+            <Transition name="controls-popover">
+              <WallHistoryPanel v-if="historyOpen" :fullscreen="fullscreen" @close="closeHistory" @restored="historyRestored" />
+            </Transition>
             <Transition name="controls-popover">
               <WallMediaDrawer
                 v-if="wallPickerOpen"
@@ -1338,6 +1377,7 @@ onBeforeUnmount(() => {
             </div>
           </div>
           <LibraryFilters @error="error" />
+          <p v-if="library.total" class="library-selection-help">拖动框选多个视频 · Ctrl/Cmd 或 Shift 追加 · 拖到边缘自动滚动 · Esc 取消框选</p>
           <VirtualMediaGrid
             v-if="library.total"
             :total="library.total"
@@ -1346,12 +1386,15 @@ onBeforeUnmount(() => {
             :revision="library.revision"
             :reset-key="library.resetKey"
             :get-item="library.itemAt"
+            :selection="library.selection"
+            :busy="library.loading || library.selecting"
+            @select-box="(indices, additive) => library.selectIndices(indices, additive).catch(error)"
             @range="(start, end) => library.loadRange(start, end).catch(error)"
           >
-            <template #default="{ media, index }"
+            <template #default="{ media, index, selected }"
               ><MediaCard
                 :media="media"
-                :selected="library.selection.has(media.id)"
+                :selected="selected"
                 @select="(event) => select(media, index, event)"
                 @play="add(media)"
                 @favorite="library.favorite(media).catch(error)"

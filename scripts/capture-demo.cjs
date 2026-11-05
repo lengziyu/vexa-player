@@ -288,7 +288,7 @@ async function main() {
   await page.getByRole("button", { name: /^视频库/ }).click();
   await page.waitForTimeout(1000);
   await shot("library-light");
-  await page.getByRole("button", { name: /^播放墙/ }).click();
+  await page.getByRole("button", { name: /^播放墙(?:\s*\d+)?$/ }).click();
   await page.waitForTimeout(1000);
   }
   // Finish the recording on the playback wall before collecting the download UI.

@@ -1,6 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { virtualGrid } from "../src/core/virtual-grid";
+import { virtualGrid, gridSelection } from "../src/core/virtual-grid";
 describe("virtualized library geometry", () => {
+  it('selects only intersected cells, including offscreen rows and reverse drags', () => {
+    const input = { width: 1000, total: 1000, viewportTop: 0, viewportHeight: 800, size: 'medium' as const };
+    const grid = virtualGrid(input);
+    const rect = { left: 2, top: grid.stride * 99 + 4, right: grid.cardWidth * 2 + 17, bottom: grid.stride * 100 + 30 };
+    expect(gridSelection(input, rect)).toEqual([297, 298, 300, 301]);
+    expect(gridSelection(input, { left: rect.right, right: rect.left, top: rect.bottom, bottom: rect.top })).toEqual([297, 298, 300, 301]);
+    expect(gridSelection(input, { left: grid.cardWidth + 1, right: grid.cardWidth + 17, top: 1, bottom: 10 })).toEqual([]);
+    expect(gridSelection(input, { left: -50, right: -10, top: 0, bottom: 80 })).toEqual([]);
+  });
   it("bounds rendered cards independently of total library size", () => {
     for (const top of [0, 10000, 800000]) {
       const grid = virtualGrid({

@@ -5,6 +5,7 @@ import { MAX_WALL_TILES, PLAYBACK_SPEEDS } from "../shared/contracts";
 import type { PlayerEngine } from "../player/engine";
 import { chooseRandom, randomStart } from "../core/random";
 import { useSettings } from "./settings";
+import type { WallHistoryEntry, WallSnapshot } from '../shared/wall-history';
 
 export const useWall = defineStore("wall", () => {
   const settings = useSettings(),
@@ -40,6 +41,95 @@ export const useWall = defineStore("wall", () => {
   const pausedByAll = ref(false),
     randomPool = ref<MediaItem[]>([]);
   const removed = ref<{ tile: TileState; index: number; paused: boolean } | null>(null);
+  const history = ref<WallHistoryEntry[]>([]), historyError = ref('');
+  let historyId: string | null = null, historyReady = false, historyRevision = 0;
+  let historyTimer: ReturnType<typeof setTimeout> | undefined;
+  let historyInterval: ReturnType<typeof setInterval> | undefined;
+  let historyWrites: Promise<void> = Promise.resolve();
+  function snapshot(): WallSnapshot {
+    return {
+      tiles: tiles.value.map(tile => ({ mediaId: tile.media.id, name: tile.media.name,
+        progress: tile.status === 'loading' ? tile.startAt : tile.progress,
+        speed: tile.speed, volume: tile.volume, muted: tile.muted, loop: tile.loop,
+        locked: tile.locked, paused: !!manualPaused.get(tile.id) })),
+      layout: settings.values.layout, fit: settings.values.fit,
+      focusedIndex: Math.max(0, tiles.value.findIndex(tile => tile.id === focused.value)),
+      muted: muted.value, volume: volume.value, mixedAudio: mixedAudio.value,
+    };
+  }
+  function saveHistory(): Promise<void> {
+    clearTimeout(historyTimer);
+    if (!historyReady || !historyId || !tiles.value.length || !window.vexa?.wallHistory) return historyWrites;
+    const id = historyId, value = snapshot(), revision = historyRevision;
+    // Capture now, and serialize writes so an old wall cannot overwrite a later one.
+    historyWrites = historyWrites.catch(() => {}).then(async () => {
+      const rows = await window.vexa!.wallHistory.save(id, value);
+      if (revision === historyRevision) { history.value = rows; historyError.value = ''; }
+    }).catch(error => {
+      historyError.value = error instanceof Error ? error.message : '历史保存失败';
+    });
+    return historyWrites;
+  }
+  function beginHistory(): void {
+    if (historyReady) historyId = crypto.randomUUID().replaceAll('-', '');
+  }
+  async function initHistory(): Promise<void> {
+    if (!window.vexa?.wallHistory || historyReady) return;
+    try {
+      history.value = await window.vexa.wallHistory.list();
+      historyReady = true;
+      historyInterval = setInterval(() => { void saveHistory(); }, 5000);
+    } catch { historyError.value = '播放墙历史暂时不可用'; }
+  }
+  async function deleteHistory(id?: string): Promise<void> {
+    clearTimeout(historyTimer);
+    ++historyRevision;
+    if (!id || id === historyId) historyId = null;
+    // Finish already queued saves before deletion; cleared history must stay cleared.
+    await historyWrites;
+    if (!window.vexa?.wallHistory) return;
+    if (id) history.value = await window.vexa.wallHistory.remove(id);
+    else { await window.vexa.wallHistory.clear(); history.value = []; }
+    historyError.value = '';
+  }
+  async function restoreHistory(id: string): Promise<string | null> {
+    if (!window.vexa?.wallHistory) return '请在桌面版中恢复播放墙';
+    await saveHistory();
+    const { entry, media } = await window.vexa.wallHistory.restore(id);
+    const available = new Map(media.map(item => [item.id, item]));
+    const restored = entry.tiles.flatMap((saved, index) => {
+      const item = available.get(saved.mediaId);
+      return item ? [{ saved, item, index }] : [];
+    });
+    if (!restored.length) throw new Error('这组视频暂时不可用，请检查文件或外接盘');
+    const previousHistoryId = historyId;
+    historyId = null;
+    try { await settings.set({ layout: entry.layout, fit: entry.fit }); }
+    catch (error) { historyId = previousHistoryId; throw error; }
+    newWall(restored.map(item => item.item));
+    historyId = entry.id;
+    tiles.value.forEach((tile, index) => {
+      const saved = restored[index]!.saved;
+      const progress = Math.min(saved.progress, Math.max(0, (tile.media.duration || 0) - .1));
+      Object.assign(tile, { startAt: progress, progress, speed: saved.speed, volume: saved.volume,
+        muted: saved.muted, loop: saved.loop, locked: saved.locked, paused: saved.paused || privacy.value });
+      manualPaused.set(tile.id, saved.paused);
+    });
+    volume.value = entry.volume;
+    muted.value = entry.muted;
+    mixedAudio.value = entry.mixedAudio;
+    pausedByAll.value = tiles.value.every(tile => tile.paused);
+    focused.value = tiles.value[restored.findIndex(item => item.index === entry.focusedIndex)]?.id ?? tiles.value[0]!.id;
+    sync();
+    await saveHistory();
+    const missing = entry.tiles.length - restored.length;
+    return missing ? `已恢复 ${restored.length} 个画面，跳过 ${missing} 个不可用视频` : null;
+  }
+  watch(() => JSON.stringify({ ...snapshot(), tiles: snapshot().tiles.map(({ progress: _progress, ...tile }) => tile) }), () => {
+    clearTimeout(historyTimer);
+    if (historyReady && historyId) historyTimer = setTimeout(() => { void saveHistory(); }, 250);
+  });
+  onScopeDispose(() => { clearTimeout(historyTimer); clearInterval(historyInterval); });
   let removalTimer: ReturnType<typeof setTimeout> | undefined;
   function dismissRemoval(): void {
     clearTimeout(removalTimer);
@@ -175,6 +265,7 @@ export const useWall = defineStore("wall", () => {
   function add(media: MediaItem): string | null {
     if (tiles.value.length >= MAX_WALL_TILES)
       return `最多同时播放 ${MAX_WALL_TILES} 个画面`;
+    if (!tiles.value.length) beginHistory();
     tiles.value.push(create(media, pausedByAll.value || privacy.value));
     focused.value ??= tiles.value[0]!.id;
     return null;
@@ -182,6 +273,8 @@ export const useWall = defineStore("wall", () => {
   function newWall(media: MediaItem[]): void {
     if (media.length > MAX_WALL_TILES)
       throw new Error(`最多同时播放 ${MAX_WALL_TILES} 个画面，请减少选择`);
+    void saveHistory();
+    beginHistory();
     dismissRemoval();
     manualPaused.clear();
     quality.value = {};
@@ -197,6 +290,7 @@ export const useWall = defineStore("wall", () => {
     const index = tiles.value.findIndex((t) => t.id === id);
     const tile = tiles.value[index];
     if (!tile) return;
+    if (tiles.value.length === 1) void saveHistory();
     if (undoable) {
       dismissRemoval();
       removed.value = { tile: { ...tile }, index, paused: !!manualPaused.get(id) };
@@ -445,6 +539,12 @@ export const useWall = defineStore("wall", () => {
     }
   }
   return {
+    history,
+    historyError,
+    initHistory,
+    saveHistory,
+    deleteHistory,
+    restoreHistory,
     tiles,
     focused,
     zoomed,

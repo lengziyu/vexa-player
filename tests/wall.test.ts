@@ -5,6 +5,7 @@ import { useWall } from "../src/stores/wall";
 import { useSettings } from "../src/stores/settings";
 import type { MediaItem } from "../src/shared/contracts";
 import type { PlayerEngine } from "../src/player/engine";
+import type { WallHistoryEntry, WallSnapshot } from '../src/shared/wall-history';
 const media = (id: string): MediaItem => ({
   id: id.repeat(32),
   path: `${id}.mp4`,
@@ -49,6 +50,42 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllGlobals());
 describe("playback resource controls", () => {
+  it('restores history without changing the previous wall layout and keeps clear history cleared', async () => {
+    let rows: WallHistoryEntry[] = [];
+    vi.stubGlobal('window', { vexa: {
+      setSettings: async () => {},
+      wallHistory: {
+        list: async () => rows,
+        save: async (id: string, value: WallSnapshot) => {
+          rows = [{ ...JSON.parse(JSON.stringify(value)), id, createdAt: 1, updatedAt: 2 }, ...rows.filter(row => row.id !== id)];
+          return rows;
+        },
+        restore: async (id: string) => ({ entry: rows.find(row => row.id === id)!, media: [media('a'), media('b')] }),
+        clear: async () => { rows = []; },
+        remove: async (id: string) => rows = rows.filter(row => row.id !== id),
+      },
+    } });
+    const w = useWall(), settings = useSettings();
+    try {
+      await w.initHistory();
+      settings.values.layout = 'grid';
+      w.newWall([media('a')]);
+      w.tiles[0]!.status = 'paused'; w.tiles[0]!.progress = 25; w.tiles[0]!.loop = true;
+      w.toggleAll(false); await w.saveHistory();
+      const firstId = rows[0]!.id;
+      w.newWall([media('b')]); settings.values.layout = 'focus'; await w.saveHistory();
+      const secondId = rows[0]!.id;
+      await w.restoreHistory(firstId);
+      expect(rows.find(row => row.id === secondId)?.layout).toBe('focus');
+      expect(w.tiles[0]).toMatchObject({ media: { id: media('a').id }, startAt: 25, loop: true, paused: true });
+      w.add(media('b'));
+      expect(w.tiles[1]!.paused).toBe(true);
+      await w.deleteHistory();
+      w.tiles[0]!.progress = 27; await nextTick(); await w.saveHistory();
+      expect(rows).toEqual([]);
+      expect(w.history).toEqual([]);
+    } finally { w.$dispose(); }
+  });
   it("keeps the current video after ending by default and only changes it after opting in", () => {
     const w = useWall(), s = useSettings();
     expect(s.values.autoNext).toBe(false);

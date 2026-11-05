@@ -240,9 +240,35 @@ export const useLibrary = defineStore("library", () => {
     return found;
   }
   function select(media: MediaItem): void {
+    if (selecting.value) return;
     const next = new Map(selection.value);
     next.has(media.id) ? next.delete(media.id) : next.set(media.id, media);
     selection.value = next;
+  }
+  async function selectIndices(indices: number[], additive = false): Promise<void> {
+    if (!window.vexa || selecting.value) return;
+    const wanted = [...new Set(indices)].filter(index => Number.isInteger(index) && index >= 0 && index < total.value).sort((a, b) => a - b);
+    const chosen = additive ? new Map(selection.value) : new Map<string, MediaItem>();
+    const epoch = generation, key = queryKey.value, snapshot = { ...query.value };
+    if (key !== lastQueryKey) throw new Error('列表已变化，请重新框选');
+    selecting.value = true;
+    try {
+      let cursor = 0;
+      while (cursor < wanted.length) {
+        const index = wanted[cursor]!, cached = validPages.has(Math.floor(index / PAGE_SIZE)) ? itemAt(index) : undefined;
+        if (cached) { chosen.set(cached.id, cached); cursor++; continue; }
+        const limit = Math.min(200, wanted.at(-1)! - index + 1);
+        const page = await window.vexa.queryLibrary({ ...snapshot, offset: index, limit });
+        if (epoch !== generation || key !== queryKey.value) throw new Error('列表已变化，请重新框选');
+        while (cursor < wanted.length && wanted[cursor]! < index + limit) {
+          const media = page.items[wanted[cursor]! - index];
+          if (media) chosen.set(media.id, media);
+          cursor++;
+        }
+      }
+      if (epoch !== generation || key !== queryKey.value) throw new Error('列表已变化，请重新框选');
+      selection.value = chosen;
+    } finally { selecting.value = false; }
   }
   async function selectRange(start: number, end: number): Promise<void> {
     if (!window.vexa || selecting.value) return;
@@ -318,6 +344,7 @@ export const useLibrary = defineStore("library", () => {
     importPaths,
     candidates,
     select,
+    selectIndices,
     selectRange,
     favorite,
     resetFilters,

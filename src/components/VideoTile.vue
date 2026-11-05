@@ -91,6 +91,10 @@ function replay(): void {
 function onPlayback(): void {
   if (!wall.privacy && !props.tile.paused) props.tile.status = "playing";
 }
+function onReady(): void {
+  if (props.tile.paused && !props.tile.error && video.value && video.value.readyState >= 2 && !video.value.seeking)
+    props.tile.status = 'paused';
+}
 onMounted(() => {
   window.addEventListener("pointerup", release);
   window.addEventListener("pointercancel", release);
@@ -181,6 +185,8 @@ onBeforeUnmount(() => {
       @loadedmetadata="metadata"
       @error="failed"
       @playing="onPlayback"
+      @canplay="onReady"
+      @seeked="onReady"
       @seeking="
         monitor.reset();
         delete wall.quality[tile.id];
@@ -248,16 +254,16 @@ onBeforeUnmount(() => {
         aria-label="画面信息"
         @click.stop="emit('info', tile.id)"
       >
-        <Icon name="info" :size="14" /></button
-      ><button
-        class="tile-action"
+        <Icon name="info" :size="14" /></button>
+    </div>
+      <button
+        class="tile-action tile-remove"
         title="移出播放墙，不删除原文件；可撤销"
         aria-label="关闭画面"
         @click.stop="wall.remove(tile.id, true)"
       >
-        <Icon name="close" :size="14" />
+        <Icon name="close" :size="14" /><span>移出</span>
       </button>
-    </div>
     <div v-if="tile.error" class="tile-error" @click.stop>
       <Icon name="warning" :size="26" />
       <p>{{ tile.error }}</p>

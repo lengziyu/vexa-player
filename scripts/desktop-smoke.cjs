@@ -46,6 +46,18 @@ async function waitForFullscreen(active) {
   if (process.platform === "darwin")
     await until(() => app.evaluate((_electron, expected) => global.__vexaNativeFullscreen === expected, active), 15000);
 }
+async function enterFullscreen() {
+  // macOS can keep HTML fullscreen inside a background window; bring the test
+  // window forward before requesting a native fullscreen transition.
+  await app.evaluate(({ BrowserWindow }) => {
+    const window = BrowserWindow.getAllWindows()[0];
+    window.show(); window.focus();
+  });
+  await page.bringToFront();
+  await page.waitForTimeout(300);
+  await page.getByRole('button', { name: '全屏播放墙', exact: true }).click();
+  await waitForFullscreen(true);
+}
 async function exitFullscreen() {
   await page.evaluate(() => { void document.exitFullscreen(); });
   await waitForFullscreen(false);
@@ -503,8 +515,7 @@ async function exerciseWallEditing(fixtures) {
   check("Escape closes the drawer and restores its trigger focus",
     await page.getByRole("button", { name: "播放中添加视频", exact: true }).evaluate(el => el === document.activeElement));
   await page.getByRole("button", { name: "播放全部", exact: true }).click();
-  await page.getByRole("button", { name: "全屏播放墙", exact: true }).click();
-  await waitForFullscreen(true);
+  await enterFullscreen();
   await page.getByRole("button", { name: "播放中添加视频", exact: true }).click();
   await drawer.waitFor();
   await page.waitForTimeout(3100);
@@ -982,8 +993,7 @@ async function main() {
       ),
   );
   await page.getByRole("button", { name: "全局静音", exact: true }).click();
-  await page.getByRole("button", { name: "全屏播放墙", exact: true }).click();
-  await waitForFullscreen(true);
+  await enterFullscreen();
   check(
     "fullscreen fills the available wall",
     await page
@@ -1153,8 +1163,7 @@ async function main() {
       stats,
     });
     if (count === 16) {
-      await page.getByRole("button", { name: "全屏播放墙", exact: true }).click();
-      await waitForFullscreen(true);
+      await enterFullscreen();
       const withNotice = await page.locator(".video-wall").boundingBox();
       await page.getByRole("button", { name: "暂停非主画面", exact: true }).click();
       await page.locator(".performance-notice").waitFor({ state: "detached" });
@@ -1408,7 +1417,7 @@ async function main() {
     ),
   );
   await page.getByRole("button", { name: "刷新文件夹", exact: true }).count();
-  await page.locator(".main-nav").getByRole("button", { name: /播放墙/ }).click();
+  await page.locator(".main-nav").getByRole("button", { name: /^播放墙(?:\s*\d+)?$/ }).click();
   await page.getByRole("button", { name: "播放中添加视频", exact: true }).click();
   const libraryDrawer = page.getByRole("region", { name: "播放墙选片", exact: true });
   await libraryDrawer.getByRole("searchbox", { name: "选片搜索", exact: true }).fill("bulk-");

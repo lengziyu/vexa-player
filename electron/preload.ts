@@ -2,6 +2,13 @@ import { contextBridge, ipcRenderer, webUtils } from "electron";
 import type { DesktopApi, ScanProgress } from "../src/shared/contracts";
 
 const api: DesktopApi = {
+  wallHistory: {
+    list: () => ipcRenderer.invoke('wall-history:list'),
+    save: (id, snapshot) => ipcRenderer.invoke('wall-history:save', id, snapshot),
+    remove: id => ipcRenderer.invoke('wall-history:remove', id),
+    clear: () => ipcRenderer.invoke('wall-history:clear'),
+    restore: id => ipcRenderer.invoke('wall-history:restore', id),
+  },
   downloads: {
     connectX: () => ipcRenderer.invoke("downloads:connect-x"),
     openXInBrowser: () => ipcRenderer.invoke("downloads:x-browser"),

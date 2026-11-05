@@ -29,6 +29,7 @@ import { createHash } from "node:crypto";
 import { Downloads } from "./downloads";
 import { DownloadNetwork } from "./download-network";
 import { XAuthentication } from "./x-auth";
+import { WallHistory } from './wall-history';
 import ffmpegPath from "ffmpeg-static";
 import ffprobe from "@ffprobe-installer/ffprobe";
 import {
@@ -127,6 +128,7 @@ async function requestQuit(): Promise<void> {
   }
   quitting = true;
   await Promise.allSettled([
+    wallHistory.flush(),
     xAuthentication?.close(),
     downloads?.close(),
     ...(worker
@@ -170,6 +172,7 @@ const waiting = new Map<
   }
 >();
 const grants = new Set<string>();
+const wallHistory = new WallHistory(dataPath);
 function unpacked(path: string): string {
   return path.replace(/app\.asar([\\/])/, "app.asar.unpacked$1");
 }
@@ -318,6 +321,20 @@ async function registerProtocols(): Promise<void> {
   });
 }
 function registerIpc(): void {
+  handle('wall-history:list', () => wallHistory.list());
+  handle('wall-history:save', (id, snapshot) => wallHistory.save(id, snapshot));
+  handle('wall-history:remove', id => wallHistory.remove(id));
+  handle('wall-history:clear', async () => { await wallHistory.clear(); });
+  handle('wall-history:restore', async id => {
+    const entry = wallHistory.get(id);
+    const candidates = await Promise.all(entry.tiles.map(async tile => {
+      const media = await rpc<MediaItem | null>('getMedia', tile.mediaId);
+      if (!media || media.status !== 'ready') return null;
+      try { return (await stat(media.path)).isFile() ? media : null; }
+      catch { return null; }
+    }));
+    return { entry, media: candidates.filter((media): media is MediaItem => !!media) };
+  });
   const requireAuthIdle = () => {
     if (downloads.busy)
       throw new Error("请先等待当前解析或下载结束，再修改 X 登录状态");
@@ -724,6 +741,7 @@ else {
         },
       });
       await downloads.init();
+      await wallHistory.init().catch(() => {});
       registerIpc();
       await createWindow();
       createTray();
